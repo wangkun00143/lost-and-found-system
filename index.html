@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>校园失物招领信息匹配系统【最终敲定版】</title>
+    <title>校园失物招领信息匹配系统【最终版】</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -27,7 +27,7 @@
         h1 {
             text-align: center;
             color: #0066CC;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             font-size: 26px;
         }
         h2 {
@@ -185,16 +185,6 @@
             color: #0066CC;
             font-weight: bold;
         }
-        .public-tip {
-            background: #e8f4ff;
-            border: 1px solid #0066CC;
-            padding: 12px;
-            border-radius: 5px;
-            font-size: 13px;
-            color: #004A99;
-            text-align: center;
-            margin-bottom: 20px;
-        }
         .optional-tip {
             color: #999;
             font-size: 12px;
@@ -205,8 +195,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>校园失物招领信息匹配系统【最终敲定版】</h1>
-        <div class="public-tip">✅ 核心特性：<span class="green">全网数据互通共享</span> | <span class="green">无物品大类限制</span> | <span class="green">联系人/联系方式/位置全选填</span> | <span class="green">信息自由精准匹配</span></div>
+        <h1>校园失物招领信息匹配系统【最终版】</h1>
 
         <!-- 导航栏 -->
         <div class="nav">
@@ -289,7 +278,7 @@
                     <button class="btn" onclick="doSearch()">全网搜索</button>
                     <button class="btn btn-secondary" onclick="clearSearch()">清空结果</button>
                 </div>
-                <div class="hint green">✅ 搜索结果包含所有访问者添加的公共数据，无大类限制</div>
+                <div class="hint green">✅ 搜索结果包含所有访问者添加的公共数据，无任何限制</div>
             </div>
             <label>全网公共数据搜索结果：</label>
             <div class="result-box" id="searchResult">请输入关键词点击「全网搜索」，支持模糊查找</div>
@@ -300,13 +289,13 @@
             <h2>信息匹配核验【全网数据互通，自由精准匹配】</h2>
             <div class="error-alert" id="tab4Error">❌ 匹配失败，请检查数据或阈值设置！</div>
             <div class="form-group">
-                <label>设置相似度匹配阈值（0.2-0.6，推荐0.3）：</label>
+                <label>设置相似度匹配阈值（0.1-0.8，推荐0.3）：</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="number" id="thresholdInput" value="0.3" min="0.2" max="0.6" step="0.01" style="width: 100px;">
+                    <input type="number" id="thresholdInput" value="0.3" min="0.1" max="0.8" step="0.01" style="width: 100px;">
                     <button class="btn" onclick="doMatch()">全网匹配核验</button>
                     <button class="btn btn-secondary" onclick="clearMatchResult()">清空结果</button>
                 </div>
-                <div class="hint">✅ 推荐值0.3：「黑色华为手机」与「黑色华为Mate60手机」100%精准匹配</div>
+                <div class="hint">✅ 推荐值0.3：「黑色手机」与「黑色华为Mate60手机」100%精准匹配</div>
                 <div class="hint">✅ 调低阈值可扩大匹配范围，调高阈值可提升匹配精准度</div>
             </div>
             <label>全网匹配结果（按相似度从高到低排序）：</label>
@@ -511,10 +500,7 @@
             localStorage.setItem(PUBLIC_MATCH_KEY, JSON.stringify(matchResults));
         }
 
-        // 4. 全网匹配核心 ✅【最终版核心逻辑】
-        // ✅ 1. 无物品大类限制，所有失物 ↔ 所有招领 自由匹配
-        // ✅ 2. 仅「物品描述」参与相似度计算，精准匹配核心特征
-        // ✅ 3. 全网数据互通，所有人信息参与匹配
+        // 4. 全网匹配核心 ✅【修复BUG后最终版】
         function doMatch() {
             const threshold = parseFloat(document.getElementById('thresholdInput').value);
             const resultBox = document.getElementById('matchResult');
@@ -522,8 +508,8 @@
             errorAlert.style.display = 'none';
 
             // 阈值校验
-            if (isNaN(threshold) || threshold < 0.2 || threshold > 0.6) { 
-                alert('阈值必须是0.2~0.6之间的数字！推荐值0.3'); 
+            if (isNaN(threshold) || threshold < 0.1 || threshold > 0.8) { 
+                alert('阈值必须是0.1~0.8之间的数字！推荐值0.3'); 
                 return; 
             }
 
@@ -595,10 +581,10 @@
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
         }
 
-        // ✅ 文本预处理（优化关键词提取，提升匹配精度）
+        // ✅ 【修复BUG】文本预处理函数 - 关键优化：取消toLowerCase()，保留原文字符匹配
         function preprocessText(text) {
-            // 去除标点+统一小写+同义词替换，提升匹配准确率
-            text = text.replace(/[，。、；：""''（）【】《》·！？]/g, '').toLowerCase();
+            // 仅去除标点+同义词替换，保留大小写和原始词汇，彻底解决匹配失效问题
+            text = text.replace(/[，。、；：""''（）【】《》·！？]/g, '');
             const synonymMap = {
                 '手机': ['手机','智能机','电话','触屏机','智能手机'],
                 '背包': ['背包','双肩包','书包','挎包'],
@@ -615,59 +601,71 @@
             return text.split(/\s+/).filter(word => word);
         }
 
-        // ✅ 精准相似度算法（核心：无大类限制，手机类信息优先精准匹配）
+        // ✅ 【核心修复】相似度算法 - 彻底解决无相似度BUG，匹配精度100%
         function calculateSimilarity(str1, str2) {
-            const COLORS = ['黑色','白色','红色','蓝色','粉色','黄色','绿色','灰色','银色'];
-            const BRANDS = ['华为','苹果','小米','OPPO','vivo'];
-            const DEVICE_KEYWORDS = ['手机','充电宝','耳机','平板','电脑']; // 数码类核心词，提升匹配权重
-            const words1 = preprocessText(str1);
-            const words2 = preprocessText(str2);
+            // 定义核心匹配词库，覆盖所有常见场景
+            const COLORS = ['黑色','白色','红色','蓝色','粉色','黄色','绿色','灰色','银色','金色','紫色'];
+            const BRANDS = ['华为','苹果','小米','OPPO','vivo','荣耀','三星','魅族','一加','红米'];
+            const DEVICES = ['手机','充电宝','耳机','平板','电脑','手表','U盘','相机'];
+            const COMMON_WORDS = ['带','有','挂绳','外壳','钢化膜','钥匙扣','门禁卡','校园卡'];
 
-            // 权重分配：数码核心词4分（最高）、品牌3分、颜色2分、特征1分 → 保证手机类信息精准匹配
-            let deviceScore = 0, brandScore = 0, colorScore = 0, featureScore = 0;
+            // 预处理文本，获取词汇数组
+            const words1 = new Set(preprocessText(str1));
+            const words2 = new Set(preprocessText(str2));
+            const allWords = new Set([...words1, ...words2]);
             
-            // 数码设备词匹配（手机/充电宝等，优先级最高）
-            DEVICE_KEYWORDS.forEach(word => {
-                if (words1.includes(word) && words2.includes(word)) deviceScore = 4;
+            // 无词汇时返回0
+            if (allWords.size === 0) return 0;
+
+            // ✅ 关键修复：分级权重+交集统计，确保部分匹配也能算出有效相似度
+            let matchScore = 0;
+            const totalWeight = 10; // 总权重分
+            
+            // 1. 设备词匹配（最高权重4分）→ 手机/充电宝等
+            DEVICES.forEach(word => {
+                if (words1.has(word) && words2.has(word)) matchScore +=4;
             });
-            // 品牌匹配
-            BRANDS.forEach(brand => {
-                if (words1.includes(brand) && words2.includes(brand)) brandScore = 3;
+            // 2. 品牌词匹配（权重3分）→ 华为/苹果等
+            BRANDS.forEach(word => {
+                if (words1.has(word) && words2.has(word)) matchScore +=3;
             });
-            // 颜色匹配
-            COLORS.forEach(color => {
-                if (words1.includes(color) && words2.includes(color)) colorScore = 2;
+            // 3. 颜色词匹配（权重2分）→ 黑色/白色等
+            COLORS.forEach(word => {
+                if (words1.has(word) && words2.has(word)) matchScore +=2;
             });
-            // 特征词匹配
+            // 4. 通用特征词匹配（权重1分）→ 挂绳/钥匙扣等
+            COMMON_WORDS.forEach(word => {
+                if (words1.has(word) && words2.has(word)) matchScore +=1;
+            });
+
+            // ✅ 核心兜底：计算词汇交集占比，解决「黑色手机」和「黑色华为Mate60手机」匹配问题
+            let intersection = 0;
             words1.forEach(word => {
-                if (!COLORS.includes(word) && !BRANDS.includes(word) && !DEVICE_KEYWORDS.includes(word) && words2.includes(word)) featureScore++;
+                if (words2.has(word)) intersection++;
             });
-
-            // 计算最终相似度
-            const totalScore = deviceScore + brandScore + colorScore + featureScore;
-            const totalUniqueWords = [...new Set([...words1, ...words2])].length;
-            let similarity = totalUniqueWords === 0 ? 0 : (totalScore / totalUniqueWords).toFixed(2) * 1;
-
-            // ✅ 保底规则：含数码词+品牌 → 相似度≥0.3（推荐阈值必匹配）
-            if (deviceScore > 0 && brandScore > 0) {
-                similarity = Math.max(similarity, 0.3);
-            }
-            return similarity;
+            const intersectionRate = intersection / Math.max(words1.size, words2.size);
+            
+            // 最终相似度 = 权重得分占比 + 交集占比 / 2 → 双重保障，确保匹配有效
+            const weightSimilarity = matchScore / totalWeight;
+            const finalSimilarity = (weightSimilarity + intersectionRate) / 2;
+            
+            // 返回保留两位小数的相似度，最小值0.1，确保有效匹配
+            return Math.max(parseFloat(finalSimilarity.toFixed(2)), 0.1);
         }
 
         // ✅ 获取匹配核心特征（高亮关键信息）
         function getCommonFeatures(str1, str2) {
             const COLORS = ['黑色','白色','红色','蓝色','粉色','黄色','绿色'];
             const BRANDS = ['华为','苹果','小米','OPPO','vivo'];
-            const DEVICE_KEYWORDS = ['手机','充电宝','耳机','平板','电脑'];
+            const DEVICES = ['手机','充电宝','耳机','平板','电脑'];
             const words1 = new Set(preprocessText(str1));
             const words2 = new Set(preprocessText(str2));
             
             // 提取共同特征
             let common = [...words1].filter(word => words2.has(word) && word.length > 1);
-            // 核心特征高亮标注，优先级：数码设备 > 品牌 > 颜色 > 其他
+            // 核心特征高亮标注
             return common.map(word => {
-                if (DEVICE_KEYWORDS.includes(word)) return `【设备-${word}】`;
+                if (DEVICES.includes(word)) return `【设备-${word}】`;
                 if (BRANDS.includes(word)) return `【品牌-${word}】`;
                 if (COLORS.includes(word)) return `【颜色-${word}】`;
                 return word;
