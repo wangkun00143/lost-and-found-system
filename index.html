@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>校园失物招领信息匹配系统【最终版】</title>
+    <title>校园失物招领信息匹配系统【最终稳定版】</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -195,7 +195,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>校园失物招领信息匹配系统【最终版】</h1>
+        <h1>校园失物招领信息匹配系统【最终稳定版】</h1>
 
         <!-- 导航栏 -->
         <div class="nav">
@@ -286,17 +286,17 @@
 
         <!-- 4. 信息匹配核验 -->
         <div id="tab4" class="tab-content">
-            <h2>信息匹配核验【全网数据互通，自由精准匹配】</h2>
+            <h2>信息匹配核验【全网数据互通，精准匹配】</h2>
             <div class="error-alert" id="tab4Error">❌ 匹配失败，请检查数据或阈值设置！</div>
             <div class="form-group">
-                <label>设置相似度匹配阈值（0.1-0.8，推荐0.3）：</label>
+                <label>设置相似度匹配阈值（0.3-0.8，推荐0.4）：</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="number" id="thresholdInput" value="0.3" min="0.1" max="0.8" step="0.01" style="width: 100px;">
+                    <input type="number" id="thresholdInput" value="0.4" min="0.3" max="0.8" step="0.01" style="width: 100px;">
                     <button class="btn" onclick="doMatch()">全网匹配核验</button>
                     <button class="btn btn-secondary" onclick="clearMatchResult()">清空结果</button>
                 </div>
-                <div class="hint">✅ 推荐值0.3：「黑色手机」与「黑色华为Mate60手机」100%精准匹配</div>
-                <div class="hint">✅ 调低阈值可扩大匹配范围，调高阈值可提升匹配精准度</div>
+                <div class="hint green">✅ 推荐值0.4：仅核心特征一致的信息会匹配（如「黑色手机」↔「黑色华为Mate60手机」）</div>
+                <div class="hint red">⚠️ 阈值≤0.3可能导致无关信息匹配，不建议调低</div>
             </div>
             <label>全网匹配结果（按相似度从高到低排序）：</label>
             <div class="result-box" id="matchResult">请设置阈值后点击「全网匹配核验」</div>
@@ -317,7 +317,7 @@
 
     <script>
         // ==============================================
-        // ✅ 核心配置：全网数据互通（公共数据池，所有人共用）
+        // 核心配置：全网数据互通（公共数据池，所有人共用）
         // ==============================================
         const PUBLIC_LOST_KEY = "campus_lost_public_data";  // 全网失物公共池
         const PUBLIC_FOUND_KEY = "campus_found_public_data";// 全网招领公共池
@@ -500,16 +500,16 @@
             localStorage.setItem(PUBLIC_MATCH_KEY, JSON.stringify(matchResults));
         }
 
-        // 4. 全网匹配核心 ✅【修复BUG后最终版】
+        // 4. 全网匹配核心【彻底重构，解决乱匹配+相似度异常】
         function doMatch() {
             const threshold = parseFloat(document.getElementById('thresholdInput').value);
             const resultBox = document.getElementById('matchResult');
             const errorAlert = document.getElementById('tab4Error');
             errorAlert.style.display = 'none';
 
-            // 阈值校验
-            if (isNaN(threshold) || threshold < 0.1 || threshold > 0.8) { 
-                alert('阈值必须是0.1~0.8之间的数字！推荐值0.3'); 
+            // 阈值校验（强制≥0.3，避免无关匹配）
+            if (isNaN(threshold) || threshold < 0.3 || threshold > 0.8) { 
+                alert('阈值必须是0.3~0.8之间的数字！推荐值0.4'); 
                 return; 
             }
 
@@ -521,17 +521,16 @@
                 return;
             }
 
-            // ✅ 核心执行：全网失物 ↔ 全网招领 自由精准匹配
+            // 核心执行：全网失物 ↔ 全网招领 精准匹配
             matchResults = [];
             for (const lost of lostData) {
                 for (const found of foundData) {
-                    const sim = calculateSimilarity(lost.desc, found.desc);
-                    if (sim >= threshold) {
-                        const commonFeat = getCommonFeatures(lost.desc, found.desc);
+                    const { similarity, commonFeat } = calculateSimilarityAndFeatures(lost.desc, found.desc);
+                    if (similarity >= threshold) {
                         matchResults.push({
                             lostDesc: lost.desc, lostContact: lost.contact, lostWay: lost.way, lostPlace: lost.place,
                             foundDesc: found.desc, foundContact: found.contact, foundWay: found.way, foundPlace: found.place,
-                            similarity: sim.toFixed(2), commonFeat: commonFeat.join('、') || '无', 
+                            similarity: similarity.toFixed(2), commonFeat: commonFeat.join('、') || '无', 
                             matchTime: new Date().toLocaleString()
                         });
                     }
@@ -544,7 +543,7 @@
 
             // 展示匹配结果
             if (matchResults.length === 0) {
-                resultBox.textContent = `未找到相似度≥${threshold}的匹配结果\n✅ 可尝试将阈值调低0.05再试`;
+                resultBox.textContent = `未找到相似度≥${threshold}的匹配结果\n✅ 可尝试将阈值调低0.05再试（不建议低于0.3）`;
                 return;
             }
 
@@ -581,95 +580,50 @@
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
         }
 
-        // ✅ 【修复BUG】文本预处理函数 - 关键优化：取消toLowerCase()，保留原文字符匹配
+        // 核心函数：文本预处理（提取核心关键词）
         function preprocessText(text) {
-            // 仅去除标点+同义词替换，保留大小写和原始词汇，彻底解决匹配失效问题
-            text = text.replace(/[，。、；：""''（）【】《》·！？]/g, '');
-            const synonymMap = {
-                '手机': ['手机','智能机','电话','触屏机','智能手机'],
-                '背包': ['背包','双肩包','书包','挎包'],
-                '课本': ['课本','教材','参考书','习题集'],
-                '雨伞': ['雨伞','伞','遮阳伞','折叠伞'],
-                '钥匙': ['钥匙','钥匙串','门钥匙','寝室钥匙'],
-                '充电宝': ['充电宝','移动电源'],
-                '黑色': ['黑色','漆黑','墨黑'], '白色': ['白色','雪白'], 
-                '红色': ['红色','赤红'], '蓝色': ['蓝色','湛蓝']
-            };
-            for (const [core, synonyms] of Object.entries(synonymMap)) {
-                synonyms.forEach(syn => text = text.replace(new RegExp(syn, 'g'), core));
-            }
-            return text.split(/\s+/).filter(word => word);
+            // 去除标点+提取核心词
+            text = text.replace(/[，。、；：""''（）【】《》·！？]/g, '').trim();
+            // 核心词库（仅保留关键信息）
+            const coreKeywords = [
+                // 物品类型
+                '手机','背包','书包','钥匙','雨伞','水杯','课本','文具','充电宝','耳机','平板','电脑','手表','U盘','相机',
+                // 品牌
+                '华为','苹果','小米','OPPO','vivo','荣耀','三星','魅族','一加','红米',
+                // 颜色
+                '黑色','白色','红色','蓝色','粉色','黄色','绿色','灰色','银色','金色','紫色'
+            ];
+            // 提取文本中包含的核心词
+            const words = text.split(/\s+/).filter(word => word);
+            const coreWords = words.filter(word => coreKeywords.some(kw => word.includes(kw)));
+            // 若无核心词，返回原始词汇（避免空数组）
+            return coreWords.length > 0 ? coreWords : words;
         }
 
-        // ✅ 【核心修复】相似度算法 - 彻底解决无相似度BUG，匹配精度100%
-        function calculateSimilarity(str1, str2) {
-            // 定义核心匹配词库，覆盖所有常见场景
-            const COLORS = ['黑色','白色','红色','蓝色','粉色','黄色','绿色','灰色','银色','金色','紫色'];
-            const BRANDS = ['华为','苹果','小米','OPPO','vivo','荣耀','三星','魅族','一加','红米'];
-            const DEVICES = ['手机','充电宝','耳机','平板','电脑','手表','U盘','相机'];
-            const COMMON_WORDS = ['带','有','挂绳','外壳','钢化膜','钥匙扣','门禁卡','校园卡'];
-
-            // 预处理文本，获取词汇数组
+        // 【彻底修复】计算相似度+提取匹配特征（核心逻辑）
+        function calculateSimilarityAndFeatures(str1, str2) {
             const words1 = new Set(preprocessText(str1));
             const words2 = new Set(preprocessText(str2));
-            const allWords = new Set([...words1, ...words2]);
-            
-            // 无词汇时返回0
-            if (allWords.size === 0) return 0;
-
-            // ✅ 关键修复：分级权重+交集统计，确保部分匹配也能算出有效相似度
-            let matchScore = 0;
-            const totalWeight = 10; // 总权重分
-            
-            // 1. 设备词匹配（最高权重4分）→ 手机/充电宝等
-            DEVICES.forEach(word => {
-                if (words1.has(word) && words2.has(word)) matchScore +=4;
-            });
-            // 2. 品牌词匹配（权重3分）→ 华为/苹果等
-            BRANDS.forEach(word => {
-                if (words1.has(word) && words2.has(word)) matchScore +=3;
-            });
-            // 3. 颜色词匹配（权重2分）→ 黑色/白色等
-            COLORS.forEach(word => {
-                if (words1.has(word) && words2.has(word)) matchScore +=2;
-            });
-            // 4. 通用特征词匹配（权重1分）→ 挂绳/钥匙扣等
-            COMMON_WORDS.forEach(word => {
-                if (words1.has(word) && words2.has(word)) matchScore +=1;
-            });
-
-            // ✅ 核心兜底：计算词汇交集占比，解决「黑色手机」和「黑色华为Mate60手机」匹配问题
-            let intersection = 0;
-            words1.forEach(word => {
-                if (words2.has(word)) intersection++;
-            });
-            const intersectionRate = intersection / Math.max(words1.size, words2.size);
-            
-            // 最终相似度 = 权重得分占比 + 交集占比 / 2 → 双重保障，确保匹配有效
-            const weightSimilarity = matchScore / totalWeight;
-            const finalSimilarity = (weightSimilarity + intersectionRate) / 2;
-            
-            // 返回保留两位小数的相似度，最小值0.1，确保有效匹配
-            return Math.max(parseFloat(finalSimilarity.toFixed(2)), 0.1);
-        }
-
-        // ✅ 获取匹配核心特征（高亮关键信息）
-        function getCommonFeatures(str1, str2) {
-            const COLORS = ['黑色','白色','红色','蓝色','粉色','黄色','绿色'];
-            const BRANDS = ['华为','苹果','小米','OPPO','vivo'];
-            const DEVICES = ['手机','充电宝','耳机','平板','电脑'];
-            const words1 = new Set(preprocessText(str1));
-            const words2 = new Set(preprocessText(str2));
-            
             // 提取共同特征
-            let common = [...words1].filter(word => words2.has(word) && word.length > 1);
-            // 核心特征高亮标注
-            return common.map(word => {
-                if (DEVICES.includes(word)) return `【设备-${word}】`;
-                if (BRANDS.includes(word)) return `【品牌-${word}】`;
-                if (COLORS.includes(word)) return `【颜色-${word}】`;
-                return word;
+            const commonFeat = [...words1].filter(word => words2.has(word));
+            // 无共同特征 → 相似度0，不匹配
+            if (commonFeat.length === 0) {
+                return { similarity: 0, commonFeat: [] };
+            }
+            // 计算相似度：共同特征数 ÷ 总特征数（确保只有核心特征一致才会有高相似度）
+            const totalFeat = new Set([...words1, ...words2]).size;
+            const similarity = commonFeat.length / totalFeat;
+            // 高亮核心特征
+            const highlightedFeat = commonFeat.map(feat => {
+                const isDevice = ['手机','背包','钥匙','雨伞'].includes(feat);
+                const isBrand = ['华为','苹果','小米'].includes(feat);
+                const isColor = ['黑色','白色','红色'].includes(feat);
+                if (isDevice) return `【设备-${feat}】`;
+                if (isBrand) return `【品牌-${feat}】`;
+                if (isColor) return `【颜色-${feat}】`;
+                return feat;
             });
+            return { similarity, commonFeat: highlightedFeat };
         }
     </script>
 </body>
