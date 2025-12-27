@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园失物招领信息匹配系统</title>
+    <!-- 引入Excel解析库（解决Excel导入问题） -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #0066CC;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        h2 {
+            color: #333;
+            margin: 20px 0;
+            font-size: 18px;
+            border-left: 4px solid #0066CC;
+            padding-left: 10px;
+        }
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            text-decoration: none;
+            background: #0066CC;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 15px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .nav a:hover {
+            background: #004A99;
+            transform: translateY(-2px);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #0066CC;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        .btn {
+            background: #0066CC;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #004A99;
+        }
+        .btn-secondary {
+            background: #666;
+        }
+        .btn-secondary:hover {
+            background: #444;
+        }
+        .result-box {
+            width: 100%;
+            height: 320px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-y: auto;
+            margin-top: 10px;
+            background: #f9f9f9;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .hint {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+            line-height: 1.5;
+        }
+        .radio-group {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .radio-group label {
+            font-weight: normal;
+            cursor: pointer;
+        }
+        input[type="radio"] {
+            width: auto;
+            margin-right: 5px;
+        }
+        .success-alert {
+            background: #e6f7ef;
+            color: #008000;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 13px;
+            display: none;
+        }
+        .error-alert {
+            background: #fff2f0;
+            color: #ff4d4f;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 13px;
+            display: none;
+        }
+        .file-info {
+            color: #0066CC;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>校园失物招领信息匹配系统</h1>
+
+        <!-- 可点击导航 -->
+        <div class="nav">
+            <a onclick="showTab('tab1')">单条信息添加</a>
+            <a onclick="showTab('tab2')">Excel批量导入</a>
+            <a onclick="showTab('tab3')">信息查询搜索</a>
+            <a onclick="showTab('tab4')">物品匹配核验</a>
+            <a onclick="showTab('tab5')">结果文件下载</a>
+        </div>
+
+        <!-- 1. 单条信息添加 -->
+        <div id="tab1" class="tab-content active">
+            <h2>单条信息添加</h2>
+            <div class="success-alert" id="tab1Success">✅ 信息添加成功！</div>
+            <div class="form-group">
+                <label>信息类型：</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="infoType" value="lost" checked> 失物信息</label>
+                    <label><input type="radio" name="infoType" value="found"> 招领信息</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>物品描述【必填】：</label>
+                <input type="text" id="descInput" placeholder="例：黑色华为Mate40，带蓝色挂绳，背面有划痕">
+                <div class="hint">请详细描述物品特征（颜色、品牌、型号、特殊标记等），提高匹配成功率</div>
+            </div>
+            <div class="form-group">
+                <label>联系人【选填】：</label>
+                <input type="text" id="contactInput" placeholder="您的姓名/昵称">
+                <div class="hint">可不填，默认显示「未填写」</div>
+            </div>
+            <div class="form-group">
+                <label>联系方式【选填】：</label>
+                <input type="text" id="wayInput" placeholder="电话/微信/QQ">
+                <div class="hint">可不填，默认显示「未填写」（建议填写，方便联系）</div>
+            </div>
+            <div class="form-group">
+                <label>存放/丢失位置【选填】：</label>
+                <input type="text" id="placeInput" placeholder="例：学校大门门卫室、2A302教室讲台、图书馆3楼">
+            </div>
+            <button class="btn" onclick="addSingleInfo()">确认添加信息</button>
+            <button class="btn btn-secondary" onclick="clearTab1Input()">清空输入</button>
+        </div>
+
+        <!-- 2. Excel批量导入 -->
+        <div id="tab2" class="tab-content">
+            <h2>Excel批量导入</h2>
+            <div class="success-alert" id="tab2Success">✅ Excel导入成功！</div>
+            <div class="error-alert" id="tab2Error">❌ 导入失败，请检查文件格式和内容！</div>
+            <div class="form-group">
+                <label>导入类型：</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="importType" value="lost" checked> 导入为失物信息</label>
+                    <label><input type="radio" name="importType" value="found"> 导入为招领信息</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Excel文件要求：</label>
+                <div class="hint">1. 必须包含「描述」列（必填，其他列可选）</div>
+                <div class="hint">2. 可选列：「联系人」「联系方式」「存放/丢失位置」（列名可模糊匹配，如「联系电话」「丢失地点」）</div>
+                <div class="hint">3. 支持格式：.xlsx（推荐）、.xls</div>
+                <div class="hint">4. 空值会自动填充为「未填写」</div>
+            </div>
+            <div class="form-group">
+                <label>选择Excel文件：</label>
+                <input type="file" id="excelFile" accept=".xlsx,.xls">
+                <div id="excelFileName" class="file-info"></div>
+            </div>
+            <button class="btn" onclick="importExcel()">开始导入</button>
+            <button class="btn btn-secondary" onclick="clearExcelFile()">取消选择</button>
+        </div>
+
+        <!-- 3. 信息查询搜索 -->
+        <div id="tab3" class="tab-content">
+            <h2>信息查询搜索</h2>
+            <div class="form-group">
+                <label>输入关键词搜索（物品名称/颜色/品牌/特征/位置）：</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="searchInput" placeholder="例：黑色手机、蓝色雨伞、图书馆、华为" style="flex: 1;">
+                    <button class="btn" onclick="doSearch()">立即搜索</button>
+                    <button class="btn btn-secondary" onclick="clearSearch()">清空结果</button>
+                </div>
+                <div class="hint">支持模糊搜索，例如输入「手机」会匹配「华为手机」「智能机」等相关信息</div>
+            </div>
+            <label>搜索结果：</label>
+            <div class="result-box" id="searchResult">请输入关键词点击「立即搜索」，或直接点击搜索查看全部信息</div>
+        </div>
+
+        <!-- 4. 物品匹配核验 -->
+        <div id="tab4" class="tab-content">
+            <h2>物品匹配核验</h2>
+            <div class="error-alert" id="tab4Error">❌ 匹配失败，请检查数据或阈值设置！</div>
+            <div class="form-group">
+                <label>设置相似度匹配阈值（0.2-0.5）：</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="thresholdInput" value="0.3" min="0.2" max="0.5" step="0.01" style="width: 100px;">
+                    <button class="btn" onclick="doMatch()">开始匹配核验</button>
+                    <button class="btn btn-secondary" onclick="clearMatchResult()">清空结果</button>
+                </div>
+                <div class="hint">阈值越低，匹配结果越多（可能包含不相关信息）；阈值越高，匹配越精准（推荐0.3）</div>
+            </div>
+            <label>匹配结果（按相似度从高到低排序）：</label>
+            <div class="result-box" id="matchResult">请设置阈值后点击「开始匹配核验」，需先添加失物和招领信息</div>
+        </div>
+
+        <!-- 5. 结果文件下载 -->
+        <div id="tab5" class="tab-content">
+            <h2>结果文件下载</h2>
+            <div class="form-group">
+                <p style="font-size: 14px; margin-bottom: 15px;">点击下方按钮下载对应数据文件（纯文本格式，记事本可直接打开）：</p>
+                <button class="btn" onclick="downloadFile('失物信息.txt', 'lost')">下载失物信息文件</button>
+                <button class="btn" onclick="downloadFile('招领信息.txt', 'found')">下载招领信息文件</button>
+                <button class="btn" onclick="downloadFile('匹配结果.txt', 'match')">下载匹配结果文件</button>
+            </div>
+            <div class="hint" style="margin-top: 20px;">⚠️ 建议定期备份文件，清除浏览器缓存可能导致本地数据丢失</div>
+            <div class="hint">文件内容包含所有添加的信息，可用于存档或分享给管理员</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局数据存储（浏览器本地存储，关闭页面不丢失）
+        let lostData = JSON.parse(localStorage.getItem('lostData')) || [];
+        let foundData = JSON.parse(localStorage.getItem('foundData')) || [];
+        let matchResults = JSON.parse(localStorage.getItem('matchResults')) || [];
+
+        // 切换标签页
+        function showTab(tabId) {
+            // 隐藏所有标签页
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // 显示选中标签页
+            document.getElementById(tabId).classList.add('active');
+            // 隐藏所有提示框
+            document.querySelectorAll('.success-alert, .error-alert').forEach(alert => {
+                alert.style.display = 'none';
+            });
+        }
+
+        // 1. 单条信息添加 - 清空输入
+        function clearTab1Input() {
+            document.getElementById('descInput').value = '';
+            document.getElementById('contactInput').value = '';
+            document.getElementById('wayInput').value = '';
+            document.getElementById('placeInput').value = '';
+            document.querySelector('input[name="infoType"][value="lost"]').checked = true;
+        }
+
+        // 1. 单条信息添加 - 确认添加
+        function addSingleInfo() {
+            const desc = document.getElementById('descInput').value.trim();
+            const contact = document.getElementById('contactInput').value.trim() || '未填写';
+            const way = document.getElementById('wayInput').value.trim() || '未填写';
+            const place = document.getElementById('placeInput').value.trim() || '未填写';
+            const isLost = document.querySelector('input[name="infoType"][value="lost"]').checked;
+
+            // 验证必填项
+            if (!desc) {
+                alert('物品描述为必填项，不能为空！');
+                return;
+            }
+
+            // 生成唯一ID（时间戳+随机数，避免重复）
+            const id = Date.now() + Math.floor(Math.random() * 1000);
+            const newInfo = {
+                id,
+                desc,
+                contact,
+                way,
+                place,
+                addTime: new Date().toLocaleString() // 添加时间戳
+            };
+
+            // 保存到对应数据中
+            if (isLost) {
+                lostData.push(newInfo);
+                localStorage.setItem('lostData', JSON.stringify(lostData));
+            } else {
+                foundData.push(newInfo);
+                localStorage.setItem('foundData', JSON.stringify(foundData));
+            }
+
+            // 显示成功提示
+            const successAlert = document.getElementById('tab1Success');
+            successAlert.style.display = 'block';
+            // 3秒后隐藏提示
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 3000);
+
+            // 清空输入框
+            clearTab1Input();
+        }
+
+        // 2. Excel导入 - 取消选择文件
+        function clearExcelFile() {
+            document.getElementById('excelFile').value = '';
+            document.getElementById('excelFileName').textContent = '';
+        }
+
+        // 2. Excel导入 - 解析并导入
+        function importExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            const isLost = document.querySelector('input[name="importType"][value="lost"]').checked;
+            const successAlert = document.getElementById('tab2Success');
+            const errorAlert = document.getElementById('tab2Error');
+
+            // 隐藏提示框
+            successAlert.style.display = 'none';
+            errorAlert.style.display = 'none';
+
+            // 验证文件是否选择
+            if (!file) {
+                alert('请先选择Excel文件！');
+                return;
+            }
+
+            // 显示选中的文件名
+            document.getElementById('excelFileName').textContent = `已选择：${file.name}`;
+
+            // 解析Excel文件
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // 读取Excel文件
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    // 获取第一个工作表
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+
+                    // 转换为JSON格式
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    if (jsonData.length === 0) {
+                        throw new Error('Excel文件中没有数据！');
+                    }
+
+                    // 处理每一条数据
+                    let importCount = 0;
+                    jsonData.forEach(item => {
+                        // 模糊匹配列名（处理不同列名的情况）
+                        let desc = '未填写';
+                        let contact = '未填写';
+                        let way = '未填写';
+                        let place = '未填写';
+
+                        // 匹配描述列（必填）
+                        Object.keys(item).forEach(key => {
+                            const lowerKey = key.toLowerCase().replace(/\s/g, '');
+                            if (lowerKey.includes('描述') || lowerKey.includes('说明') || lowerKey.includes('物品')) {
+                                desc = String(item[key]).trim() || '未填写';
+                            } else if (lowerKey.includes('联系人') || lowerKey.includes('姓名')) {
+                                contact = String(item[key]).trim() || '未填写';
+                            } else if (lowerKey.includes('联系') || lowerKey.includes('电话') || lowerKey.includes('微信') || lowerKey.includes('qq')) {
+                                way = String(item[key]).trim() || '未填写';
+                            } else if (lowerKey.includes('位置') || lowerKey.includes('地点') || lowerKey.includes('存放') || lowerKey.includes('丢失')) {
+                                place = String(item[key]).trim() || '未填写';
+                            }
+                        });
+
+                        // 只有描述不为空才导入
+                        if (desc !== '未填写') {
+                            const id = Date.now() + Math.floor(Math.random() * 1000);
+                            const newInfo = {
+                                id,
+                                desc,
+                                contact,
+                                way,
+                                place,
+                                addTime: new Date().toLocaleString()
+                            };
+
+                            if (isLost) {
+                                lostData.push(newInfo);
+                            } else {
+                                foundData.push(newInfo);
+                            }
+                            importCount++;
+                        }
+                    });
+
+                    // 保存到本地存储
+                    if (isLost) {
+                        localStorage.setItem('lostData', JSON.stringify(lostData));
+                    } else {
+                        localStorage.setItem('foundData', JSON.stringify(foundData));
+                    }
+
+                    // 显示成功提示
+                    successAlert.textContent = `✅ Excel导入成功！共导入 ${importCount} 条有效数据`;
+                    successAlert.style.display = 'block';
+
+                    // 清空文件选择
+                    setTimeout(() => {
+                        clearExcelFile();
+                        successAlert.style.display = 'none';
+                    }, 3000);
+
+                } catch (err) {
+                    // 显示错误提示
+                    errorAlert.textContent = `❌ 导入失败：${err.message}`;
+                    errorAlert.style.display = 'block';
+                    console.error('Excel导入错误：', err);
+                }
+            };
+
+            // 读取文件（二进制格式）
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 3. 搜索功能 - 清空结果
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResult').textContent = '请输入关键词点击「立即搜索」，或直接点击搜索查看全部信息';
+        }
+
+        // 3. 搜索功能 - 执行搜索
+        function doSearch() {
+            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+            const resultBox = document.getElementById('searchResult');
+            resultBox.innerHTML = '';
+
+            // 搜索失物信息
+            let lostResults = keyword 
+                ? lostData.filter(item => 
+                    item.desc.toLowerCase().includes(keyword) || 
+                    item.place.toLowerCase().includes(keyword) || 
+                    calculateSimilarity(keyword, item.desc) >= 0.2
+                )
+                : lostData;
+
+            // 搜索招领信息
+            let foundResults = keyword
+                ? foundData.filter(item => 
+                    item.desc.toLowerCase().includes(keyword) || 
+                    item.place.toLowerCase().includes(keyword) || 
+                    calculateSimilarity(keyword, item.desc) >= 0.2
+                )
+                : foundData;
+
+            // 显示结果
+            resultBox.innerHTML += `<strong>🔍 搜索关键词：${keyword || '全部信息'}</strong>\n`;
+            resultBox.innerHTML += '-'.repeat(80) + '\n';
+            
+            resultBox.innerHTML += `<strong>📌 失物信息（共 ${lostResults.length} 条）</strong>\n`;
+            if (lostResults.length === 0) {
+                resultBox.innerHTML += '暂无相关失物信息\n';
+            } else {
+                lostResults.forEach((item, index) => {
+                    resultBox.innerHTML += `\n${index + 1}. ID: ${item.id}\n`;
+                    resultBox.innerHTML += `   描述：${item.desc}\n`;
+                    resultBox.innerHTML += `   联系人：${item.contact}\n`;
+                    resultBox.innerHTML += `   联系方式：${item.way}\n`;
+                    resultBox.innerHTML += `   丢失位置：${item.place}\n`;
+                    resultBox.innerHTML += `   添加时间：${item.addTime}\n`;
+                    resultBox.innerHTML += '-'.repeat(60) + '\n';
+                });
+            }
+
+            resultBox.innerHTML += `<strong>\n📌 招领信息（共 ${foundResults.length} 条）</strong>\n`;
+            if (foundResults.length === 0) {
+                resultBox.innerHTML += '暂无相关招领信息\n';
+            } else {
+                foundResults.forEach((item, index) => {
+                    resultBox.innerHTML += `\n${index + 1}. ID: ${item.id}\n`;
+                    resultBox.innerHTML += `   描述：${item.desc}\n`;
+                    resultBox.innerHTML += `   联系人：${item.contact}\n`;
+                    resultBox.innerHTML += `   联系方式：${item.way}\n`;
+                    resultBox.innerHTML += `   存放位置：${item.place}\n`;
+                    resultBox.innerHTML += `   添加时间：${item.addTime}\n`;
+                    resultBox.innerHTML += '-'.repeat(60) + '\n';
+                });
+            }
+        }
+
+        // 4. 匹配功能 - 清空结果
+        function clearMatchResult() {
+            document.getElementById('matchResult').textContent = '请设置阈值后点击「开始匹配核验」，需先添加失物和招领信息';
+            matchResults = [];
+            localStorage.setItem('matchResults', JSON.stringify(matchResults));
+        }
+
+        // 4. 匹配功能 - 执行匹配
+        function doMatch() {
+            const threshold = parseFloat(document.getElementById('thresholdInput').value);
+            const resultBox = document.getElementById('matchResult');
+            const errorAlert = document.getElementById('tab4Error');
+            errorAlert.style.display = 'none';
+
+            // 验证阈值
+            if (isNaN(threshold) || threshold < 0.2 || threshold > 0.5) {
+                alert('阈值必须是0.2~0.5之间的数字！');
+                return;
+            }
+
+            // 验证数据是否存在
+            if (lostData.length === 0 || foundData.length === 0) {
+                errorAlert.textContent = '❌ 失物信息或招领信息为空，请先添加数据！';
+                errorAlert.style.display = 'block';
+                resultBox.textContent = '失物信息或招领信息为空，无法匹配';
+                return;
+            }
+
+            // 计算匹配结果
+            matchResults = [];
+            for (const lost of lostData) {
+                for (const found of foundData) {
+                    const sim = calculateSimilarity(lost.desc, found.desc);
+                    if (sim >= threshold) {
+                        const commonFeat = getCommonFeatures(lost.desc, found.desc);
+                        matchResults.push({
+                            lostDesc: lost.desc,
+                            lostContact: lost.contact,
+                            lostWay: lost.way,
+                            lostPlace: lost.place,
+                            foundDesc: found.desc,
+                            foundContact: found.contact,
+                            foundWay: found.way,
+                            foundPlace: found.place,
+                            similarity: sim.toFixed(2),
+                            commonFeat: commonFeat.join('、') || '无',
+                            matchTime: new Date().toLocaleString()
+                        });
+                    }
+                }
+            }
+
+            // 按相似度排序（从高到低）
+            matchResults.sort((a, b) => b.similarity - a.similarity);
+
+            // 保存匹配结果到本地存储
+            localStorage.setItem('matchResults', JSON.stringify(matchResults));
+
+            // 显示结果
+            if (matchResults.length === 0) {
+                resultBox.textContent = `未找到相似度≥${threshold}的匹配结果\n可尝试降低阈值或添加更多信息`;
+                return;
+            }
+
+            resultBox.innerHTML = `<strong>✅ 匹配成功！共找到 ${matchResults.length} 组匹配结果（阈值：${threshold}）</strong>\n`;
+            resultBox.innerHTML += '-'.repeat(80) + '\n';
+
+            matchResults.forEach((item, index) => {
+                resultBox.innerHTML += `\n【匹配组 ${index + 1}】相似度：${item.similarity}\n`;
+                resultBox.innerHTML += `   🔹 匹配特征：${item.commonFeat}\n`;
+                resultBox.innerHTML += `   🔸 失物信息：\n`;
+                resultBox.innerHTML += `       描述：${item.lostDesc}\n`;
+                resultBox.innerHTML += `       失主：${item.lostContact} | 联系方式：${item.lostWay}\n`;
+                resultBox.innerHTML += `       丢失位置：${item.lostPlace}\n`;
+                resultBox.innerHTML += `   🔸 招领信息：\n`;
+                resultBox.innerHTML += `       描述：${item.foundDesc}\n`;
+                resultBox.innerHTML += `       招领人：${item.foundContact} | 联系方式：${item.foundWay}\n`;
+                resultBox.innerHTML += `       存放位置：${item.foundPlace}\n`;
+                resultBox.innerHTML += `   匹配时间：${item.matchTime}\n`;
+                resultBox.innerHTML += '-'.repeat(80) + '\n';
+            });
+        }
+
+        // 5. 下载文件功能
+        function downloadFile(filename, type) {
+            let content = `${filename}\n`;
+            content += '='.repeat(60) + '\n';
+            content += `生成时间：${new Date().toLocaleString()}\n`;
+            content += '='.repeat(60) + '\n\n';
+
+            // 生成对应文件内容
+            if (type === 'lost') {
+                // 失物信息
+                if (lostData.length === 0) {
+                    content += '暂无失物信息\n';
+                } else {
+                    lostData.forEach((item, index) => {
+                        content += `${index + 1}. ID：${item.id}\n`;
+                        content += `   物品描述：${item.desc}\n`;
+                        content += `   联系人：${item.contact}\n`;
+                        content += `   联系方式：${item.way}\n`;
+                        content += `   丢失位置：${item.place}\n`;
+                        content += `   添加时间：${item.addTime}\n`;
+                        content += '-'.repeat(40) + '\n\n';
+                    });
+                }
+            } else if (type === 'found') {
+                // 招领信息
+                if (foundData.length === 0) {
+                    content += '暂无招领信息\n';
+                } else {
+                    foundData.forEach((item, index) => {
+                        content += `${index + 1}. ID：${item.id}\n`;
+                        content += `   物品描述：${item.desc}\n`;
+                        content += `   联系人：${item.contact}\n`;
+                        content += `   联系方式：${item.way}\n`;
+                        content += `   存放位置：${item.place}\n`;
+                        content += `   添加时间：${item.addTime}\n`;
+                        content += '-'.repeat(40) + '\n\n';
+                    });
+                }
+            } else if (type === 'match') {
+                // 匹配结果
+                if (matchResults.length === 0) {
+                    content += '暂无匹配结果\n';
+                } else {
+                    matchResults.forEach((item, index) => {
+                        content += `匹配组 ${index + 1}\n`;
+                        content += `   相似度：${item.similarity}\n`;
+                        content += `   匹配特征：${item.commonFeat}\n`;
+                        content += `   失物描述：${item.lostDesc}\n`;
+                        content += `   失主信息：${item.lostContact} | ${item.lostWay}\n`;
+                        content += `   丢失位置：${item.lostPlace}\n`;
+                        content += `   招领描述：${item.foundDesc}\n`;
+                        content += `   招领人信息：${item.foundContact} | ${item.foundWay}\n`;
+                        content += `   存放位置：${item.foundPlace}\n`;
+                        content += `   匹配时间：${item.matchTime}\n`;
+                        content += '='.repeat(50) + '\n\n';
+                    });
+                }
+            }
+
+            // 创建下载链接并触发下载
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+
+            // 清理临时链接
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        // 辅助函数：文本预处理（去除标点、转小写、同义词替换）
+        function preprocessText(text) {
+            // 去除中文标点
+            text = text.replace(/[，。、；：""''（）【】《》·！？]/g, '');
+            // 转小写
+            text = text.toLowerCase();
+            // 同义词替换（统一关键词）
+            const synonymMap = {
+                '背包': ['双肩包', '书包', '挎包', '背包'],
+                '课本': ['教材', '课本', '参考书', '习题集'],
+                '手机': ['手机', '智能机', '电话', '触屏机', '智能手机'],
+                '雨伞': ['伞', '雨伞', '遮阳伞', '折叠伞', '晴雨伞'],
+                '钥匙': ['钥匙', '钥匙串', '门钥匙', '寝室钥匙', '车钥匙'],
+                '充电宝': ['移动电源', '充电宝', '充电宝'],
+                '笔记本': ['笔记本电脑', '电脑', '本本', '笔电'],
+                '黑色': ['黑色', '漆黑', '墨黑'],
+                '白色': ['白色', '雪白', '乳白'],
+                '红色': ['红色', '赤红', '朱红'],
+                '蓝色': ['蓝色', '湛蓝', '藏蓝'],
+                '粉色': ['粉色', '粉红', '桃红'],
+                '黄色': ['黄色', '金黄', '鹅黄'],
+                '绿色': ['绿色', '翠绿', '墨绿'],
+                '灰色': ['灰色', '银灰', '深灰'],
+                '紫色': ['紫色', '紫红', '紫罗兰'],
+                '棕色': ['棕色', '褐色', '咖啡色']
+            };
+
+            // 替换同义词
+            for (const [core, synonyms] of Object.entries(synonymMap)) {
+                synonyms.forEach(syn => {
+                    text = text.replace(new RegExp(syn, 'g'), core);
+                });
+            }
+
+            // 按空格分割关键词
+            return text.split(/\s+/).filter(word => word);
+        }
+
+        // 辅助函数：计算文本相似度（核心算法，还原原Python逻辑）
+        function calculateSimilarity(str1, str2) {
+            const MAIN_ITEMS = ['手机', '背包', '书包', '课本', '雨伞', '钥匙', '充电宝', '笔记本'];
+            const COLOR_LIST = ['黑色', '白色', '红色', '蓝色', '粉色', '黄色', '绿色', '灰色', '紫色', '棕色'];
+
+            // 提取主物品和颜色
+            function getMainItemColor(desc) {
+                const allColors = COLOR_LIST.filter(color => desc.includes(color));
+                if (!allColors.length) return [];
+
+                let mainItem = null;
+                for (const item of MAIN_ITEMS) {
+                    if (desc.includes(item)) {
+                        mainItem = item;
+                        break;
+                    }
+                }
+
+                if (!mainItem) return allColors;
+
+                // 匹配「颜色+物品」或「物品+是/为+颜色」的格式
+                const pattern = new RegExp(`(${COLOR_LIST.join('|')})${mainItem}|${mainItem}(是|为)(${COLOR_LIST.join('|')})`);
+                const match = desc.match(pattern);
+                if (match) {
+                    const colors = match.filter(part => COLOR_LIST.includes(part));
+                    return [...new Set(colors)];
+                }
+
+                return allColors;
+            }
+
+            // 计算颜色权重
+            const lostColors = getMainItemColor(str1);
+            const foundColors = getMainItemColor(str2);
+            let colorWeight = 1.0;
+            if (lostColors.length && foundColors.length && !lostColors.some(color => foundColors.includes(color))) {
+                colorWeight = 0.1; // 颜色完全不匹配，降低权重
+            }
+
+            // 计算关键词相似度
+            const keywords1 = preprocessText(str1);
+            const keywords2 = preprocessText(str2);
+            const commonKeywords = keywords1.filter(word => keywords2.includes(word));
+            const totalKeywords = [...new Set([...keywords1, ...keywords2])];
+            const keywordSim = totalKeywords.length ? commonKeywords.length / totalKeywords.length : 0;
+
+            // 计算文本编辑距离相似度
+            const textSim = sequenceMatcher(str1.toLowerCase(), str2.toLowerCase());
+
+            // 最终相似度 = (关键词相似度 + 文本相似度)/2 * 颜色权重
+            const finalSim = (keywordSim + textSim) / 2 * colorWeight;
+            return Math.round(finalSim * 100) / 100; // 保留2位小数
+        }
+
+        // 辅助函数：文本编辑距离相似度（还原Python的SequenceMatcher）
+        function sequenceMatcher(str1, str2) {
+            const len1 = str1.length;
+            const len2 = str2.length;
+            const matrix = Array.from({ length: len1 + 1 }, () => Array(len2 + 1).fill(0));
+
+            // 填充矩阵
+            for (let i = 1; i <= len1; i++) {
+                for (let j = 1; j <= len2; j++) {
+                    if (str1[i - 1] === str2[j - 1]) {
+                        matrix[i][j] = matrix[i - 1][j - 1] + 1;
+                    } else {
+                        matrix[i][j] = Math.max(matrix[i - 1][j], matrix[i][j - 1]);
+                    }
+                }
+            }
+
+            // 最长公共子序列长度
+            const lcsLength = matrix[len1][len2];
+            // 相似度 = 2*LCS长度 / (字符串1长度 + 字符串2长度)
+            return (2 * lcsLength) / (len1 + len2);
+        }
+
+        // 辅助函数：获取共同特征
+        function getCommonFeatures(str1, str2) {
+            const keywords1 = new Set(preprocessText(str1));
+            const keywords2 = new Set(preprocessText(str2));
+            return [...keywords1].filter(word => keywords2.has(word) && word.length > 1);
+        }
+    </script>
+</body>
+</html>
