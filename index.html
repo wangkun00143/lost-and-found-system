@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>校园失物招领信息匹配系统【终极完美版】</title>
+    <title>校园失物招领信息匹配系统</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -160,7 +160,7 @@
             display: none;
         }
         .error-alert {
-            background: #fff2f0;
+            background: #f5dede;
             color: #ff4d4f;
             padding: 10px 15px;
             border-radius: 5px;
@@ -171,7 +171,7 @@
         .file-info {
             color: #0066CC;
             font-size: 13px;
-            margin-top: 8px;
+            margin-top: 5px;
         }
         .red {
             color: #ff4d4f;
@@ -195,7 +195,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>校园失物招领信息匹配系统【终极完美版】</h1>
+        <h1>校园失物招领信息匹配系统</h1>
 
         <!-- 导航栏 -->
         <div class="nav">
@@ -219,23 +219,23 @@
             </div>
             <div class="form-group">
                 <label>物品描述【必填，越详细匹配越精准】：</label>
-                <input type="text" id="descInput" placeholder="例：黑色华为Mate60手机，带蓝色挂绳 | 黑色双肩包，带小熊挂件 | 一串钥匙，含宿舍门禁卡">
-                <div class="hint green">✅ 填写颜色、品牌、型号、特征等，大幅提升匹配成功率</div>
+                <input type="text" id="descInput" placeholder="例：黑色华为Mate60手机，带蓝色挂绳 | 黑色双肩包，带小熊挂件 | 一串钥匙，含宿舍门禁卡" oninput="this.value = this.value.replace(/\s+/g, '')">
+                <div class="hint green">✅ 自动过滤所有空格，填写颜色、品牌、型号可提升匹配精度</div>
             </div>
             <div class="form-group">
                 <label>联系人：</label>
-                <input type="text" id="contactInput" placeholder="您的姓名/班级/昵称（选填）">
-                <div class="optional-tip">👉 选填项，可留空</div>
+                <input type="text" id="contactInput" placeholder="您的姓名/班级/昵称（选填）" oninput="this.value = this.value.replace(/\s+/g, '')">
+                <div class="optional-tip">👉 选填项，可留空，自动过滤空格</div>
             </div>
             <div class="form-group">
                 <label>联系方式：</label>
-                <input type="text" id="wayInput" placeholder="电话/微信/QQ（选填）">
-                <div class="optional-tip">👉 选填项，可留空，建议填写方便他人联系</div>
+                <input type="text" id="wayInput" placeholder="电话/微信/QQ（选填）" oninput="this.value = this.value.replace(/\s+/g, '')">
+                <div class="optional-tip">👉 选填项，可留空，自动过滤空格</div>
             </div>
             <div class="form-group">
                 <label>丢失/存放位置：</label>
-                <input type="text" id="placeInput" placeholder="例：教学楼2楼、图书馆自习区、食堂一楼（选填）">
-                <div class="optional-tip">👉 选填项，可留空</div>
+                <input type="text" id="placeInput" placeholder="例：教学楼2楼、图书馆自习区、食堂一楼（选填）" oninput="this.value = this.value.replace(/\s+/g, '')">
+                <div class="optional-tip">👉 选填项，可留空，自动过滤空格</div>
             </div>
             <button class="btn" onclick="addSingleInfo()">确认添加至公共池</button>
             <button class="btn btn-secondary" onclick="clearTab1Input()">清空输入</button>
@@ -257,7 +257,7 @@
                 <label>Excel文件要求：</label>
                 <div class="hint">✅ 仅「描述」列为必填，其余列（联系人/联系方式/位置）全部可选，可留空</div>
                 <div class="hint">✅ 列名支持模糊匹配：描述/说明、联系人/姓名、联系方式/电话、位置/地点</div>
-                <div class="hint">✅ 支持格式：.xlsx（推荐）、.xls，无需加密</div>
+                <div class="hint green">✅ 导入数据将自动过滤所有空格，无需手动清理</div>
             </div>
             <div class="form-group">
                 <label>选择Excel文件：</label>
@@ -274,11 +274,11 @@
             <div class="form-group">
                 <label>输入关键词搜索（颜色/品牌/特征/联系人/位置）：</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" id="searchInput" placeholder="例：黑色华为、蓝色雨伞、张三、图书馆" style="flex: 1;">
+                    <input type="text" id="searchInput" placeholder="例：黑色华为、蓝色雨伞、张三、图书馆" oninput="this.value = this.value.replace(/\s+/g, '')">
                     <button class="btn" onclick="doSearch()">全网搜索</button>
                     <button class="btn btn-secondary" onclick="clearSearch()">清空结果</button>
                 </div>
-                <div class="hint green">✅ 搜索结果包含所有访问者添加的公共数据，无任何限制</div>
+                <div class="hint green">✅ 搜索关键词自动过滤空格，支持模糊匹配</div>
             </div>
             <label>全网公共数据搜索结果：</label>
             <div class="result-box" id="searchResult">请输入关键词点击「全网搜索」，支持模糊查找</div>
@@ -286,17 +286,15 @@
 
         <!-- 4. 信息匹配核验 -->
         <div id="tab4" class="tab-content">
-            <h2>信息匹配核验【智能精准匹配，无乱匹配】</h2>
+            <h2>信息匹配核验</h2>
             <div class="error-alert" id="tab4Error">❌ 匹配失败，请检查数据或阈值设置！</div>
             <div class="form-group">
                 <label>设置相似度匹配阈值（0.5-0.95，推荐0.6）：</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="number" id="thresholdInput" value="0.6" min="0.5" max="0.95" step="0.01" style="width: 100px;">
+                    <input type="number" id="thresholdInput" value="0.6" min="0.5" max="0.95" step="0.01">
                     <button class="btn" onclick="doMatch()">全网匹配核验</button>
                     <button class="btn btn-secondary" onclick="clearMatchResult()">清空结果</button>
                 </div>
-                <div class="hint green">✅ 推荐值0.6：「黑色手机」↔「黑色华为Mate60手机」相似度≈0.92，100%匹配</div>
-                <div class="hint red">⚠️ 无关物品（如雨伞/手机）相似度绝对为0，不会出现在结果中</div>
             </div>
             <label>全网匹配结果（按相似度从高到低排序）：</label>
             <div class="result-box" id="matchResult">请设置阈值后点击「全网匹配核验」</div>
@@ -304,9 +302,9 @@
 
         <!-- 5. 数据文件下载 -->
         <div id="tab5" class="tab-content">
-            <h2>数据文件下载【下载全网公共数据完整汇总】</h2>
+            <h2>数据文件下载</h2>
             <div class="form-group">
-                <p style="font-size: 14px; margin-bottom: 15px; color:#333;">✅ 下载文件包含 <span class="green">所有访问者</span> 添加的公共数据，支持存档/分享/打印</p>
+                <p style="font-size: 14px; margin-bottom: 15px; color:#333;">✅ 下载文件包含 <span class="green">所有访问者</span> 添加的公共数据，已自动过滤空格，支持存档/分享/打印</p>
                 <button class="btn" onclick="downloadFile('全网失物信息汇总.txt', 'lost')">下载全网失物信息</button>
                 <button class="btn" onclick="downloadFile('全网招领信息汇总.txt', 'found')">下载全网招领信息</button>
                 <button class="btn" onclick="downloadFile('全网匹配结果汇总.txt', 'match')">下载全网匹配结果</button>
@@ -342,12 +340,18 @@
             document.querySelector('input[name="infoType"][value="lost"]').checked = true;
         }
 
-        // 单条添加核心
+        // ✅ 核心优化：统一空格过滤工具函数（全局复用）
+        function removeAllSpaces(str) {
+            return str ? str.replace(/\s+/g, '') : '';
+        }
+
+        // 单条添加核心（自动过滤所有空格）
         function addSingleInfo() {
-            const desc = document.getElementById('descInput').value.trim();
-            const contact = document.getElementById('contactInput').value.trim() || "未填写";
-            const way = document.getElementById('wayInput').value.trim() || "未填写";
-            const place = document.getElementById('placeInput').value.trim() || "未填写";
+            // 自动过滤所有输入框的首尾+中间空格
+            const desc = removeAllSpaces(document.getElementById('descInput').value.trim());
+            const contact = removeAllSpaces(document.getElementById('contactInput').value.trim()) || "未填写";
+            const way = removeAllSpaces(document.getElementById('wayInput').value.trim()) || "未填写";
+            const place = removeAllSpaces(document.getElementById('placeInput').value.trim()) || "未填写";
             const isLost = document.querySelector('input[name="infoType"][value="lost"]').checked;
 
             if (!desc) { 
@@ -377,7 +381,7 @@
             document.getElementById('excelFileName').textContent = '';
         }
 
-        // Excel批量导入核心
+        // Excel批量导入核心（导入数据自动过滤空格）
         function importExcel() {
             const fileInput = document.getElementById('excelFile');
             const file = fileInput.files[0];
@@ -405,10 +409,10 @@
                         let desc = '', contact = '未填写', way = '未填写', place = '未填写';
                         Object.keys(item).forEach(key => {
                             const lowerKey = key.toLowerCase().replace(/\s/g, '');
-                            if (lowerKey.includes('描述') || lowerKey.includes('说明')) desc = String(item[key]).trim();
-                            else if (lowerKey.includes('联系人')) contact = String(item[key]).trim() || '未填写';
-                            else if (lowerKey.includes('联系')) way = String(item[key]).trim() || '未填写';
-                            else if (lowerKey.includes('位置')) place = String(item[key]).trim() || '未填写';
+                            if (lowerKey.includes('描述') || lowerKey.includes('说明')) desc = removeAllSpaces(String(item[key]).trim());
+                            else if (lowerKey.includes('联系人')) contact = removeAllSpaces(String(item[key]).trim()) || '未填写';
+                            else if (lowerKey.includes('联系')) way = removeAllSpaces(String(item[key]).trim()) || '未填写';
+                            else if (lowerKey.includes('位置')) place = removeAllSpaces(String(item[key]).trim()) || '未填写';
                         });
                         if (desc) {
                             const id = Date.now() + Math.floor(Math.random() * 1000);
@@ -421,7 +425,7 @@
                     if (isLost) localStorage.setItem(PUBLIC_LOST_KEY, JSON.stringify(lostData));
                     else localStorage.setItem(PUBLIC_FOUND_KEY, JSON.stringify(foundData));
 
-                    successAlert.textContent = `✅ 导入成功！共添加 ${importCount} 条公共数据`;
+                    successAlert.textContent = `✅ 导入成功！共添加 ${importCount} 条公共数据（已自动过滤空格）`;
                     successAlert.style.display = 'block';
                     setTimeout(() => { clearExcelFile(); successAlert.style.display = 'none'; }, 3000);
                 } catch (err) {
@@ -438,9 +442,9 @@
             document.getElementById('searchResult').textContent = '请输入关键词点击「全网搜索」，支持模糊查找';
         }
 
-        // 全网搜索核心
+        // 全网搜索核心（关键词自动过滤空格）
         function doSearch() {
-            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+            const keyword = removeAllSpaces(document.getElementById('searchInput').value.trim()).toLowerCase();
             const resultBox = document.getElementById('searchResult');
             resultBox.innerHTML = '';
 
@@ -531,7 +535,7 @@
             });
         }
 
-        // 数据下载核心
+        // 数据下载核心（下载数据自动过滤空格）
         function downloadFile(filename, type) {
             let content = `${filename}\n` + '='.repeat(70) + `\n生成时间：${new Date().toLocaleString()}\n` + '='.repeat(70) + '\n\n';
             if (type === 'lost') {
@@ -559,20 +563,11 @@
         // 1. 智能分词 → 2. 词性加权 → 3. 最长公共子串 → 4. 语义相似度归一化
         // 无预设大类、无乱匹配、相似度精准分级、手机相关语义拉满
         // ==============================================
-        
-        /**
-         * 【核心1】智能文本预处理 + 分词（纯前端NLP分词，无依赖）
-         * @param {string} text 物品描述文本
-         * @returns {Array} 分词结果+清洗后的纯文本
-         */
         function textPreprocess(text) {
-            // 第一步：清洗文本 - 去标点、去空格、去冗余助词
-            const cleanText = text.replace(/[，。、；：""''（）【】《》·！？,.\s]/g, '')
+            const cleanText = removeAllSpaces(text).replace(/[，。、；：""''（）【】《》·！？,.]/g, '')
                                   .replace(/(的|了|呢|吧|啊|呀|之|与|和)/g, '');
-            // 第二步：智能分词（基于最大匹配+特征词优先，纯前端实现）
             const tokens = [];
             let tempText = cleanText;
-            // 优先匹配长特征词（品牌/型号/特征），避免分词断裂
             const longFeatureWords = ['华为Mate60','华为Pura70','苹果15','苹果16','小米14','OPPOFindX7','vivoX100'];
             for (const word of longFeatureWords) {
                 if (tempText.includes(word)) {
@@ -580,7 +575,6 @@
                     tempText = tempText.replace(word, '');
                 }
             }
-            // 剩余文本单字/双字分词（兼顾完整性和精准性）
             while (tempText.length > 0) {
                 if (tempText.length >= 2) {
                     tokens.push(tempText.substring(0, 2));
@@ -593,31 +587,19 @@
             return { tokens: tokens.filter(t => t), cleanText };
         }
 
-        /**
-         * 【核心2】词性加权计算（核心词权重拉满，无关词权重为0）
-         * 权重优先级：物品主体(5) > 品牌(4) > 颜色(3) > 型号(2) > 特征(1)
-         * 例：手机(5)、华为(4)、黑色(3)、Mate60(2)、挂绳(1)
-         */
         function getTokenWeight(token) {
-            // 物品主体词（最高权重5，决定物品类别，跨类别权重直接归零）
             const mainObjectWords = ['手机','背包','书包','钥匙','雨伞','水杯','课本','文具','充电宝','耳机','平板','电脑','手表','U盘','相机'];
-            // 品牌词（权重4）
             const brandWords = ['华为','苹果','小米','OPPO','vivo','荣耀','三星','魅族','一加','红米','真我','iqoo'];
-            // 颜色词（权重3）
             const colorWords = ['黑色','白色','红色','蓝色','粉色','黄色','绿色','灰色','银色','金色','紫色','橙色','棕色'];
-            // 型号词（权重2）
             const modelWords = ['Mate60','Pura70','15','16','14','FindX7','X100','Pro','Ultra','Max'];
             
             if (mainObjectWords.some(w => token.includes(w))) return 5;
             if (brandWords.some(w => token.includes(w))) return 4;
             if (colorWords.some(w => token.includes(w))) return 3;
             if (modelWords.some(w => token.includes(w))) return 2;
-            return 1; // 普通特征词权重1
+            return 1;
         }
 
-        /**
-         * 【核心3】最长公共子串匹配（解决「黑色手机」和「黑色华为Mate60手机」匹配度低的问题）
-         */
         function longestCommonSubstring(s1, s2) {
             const m = s1.length;
             const n = s2.length;
@@ -633,57 +615,37 @@
                     }
                 }
             }
-            return maxLen / Math.max(m, n); // 归一化到0-1区间
+            return maxLen / Math.max(m, n);
         }
 
-        /**
-         * 【核心4】终极语义相似度计算（四层算法融合，最终对外暴露的核心函数）
-         * ✅ 跨类别（雨伞/手机）相似度=0 → 彻底杜绝乱匹配
-         * ✅ 同类别语义关联（黑色手机↔黑色华为Mate60）相似度≈0.9 → 拉满
-         * ✅ 相似度数值差异化 → 不同匹配程度分数不同，无统一低分
-         * ✅ 无预设大类、无词库约束 → 纯语义分析
-         */
         function calculateSemanticSimilarity(str1, str2) {
-            // 步骤1：预处理+分词
             const { tokens: tokens1, cleanText: text1 } = textPreprocess(str1);
             const { tokens: tokens2, cleanText: text2 } = textPreprocess(str2);
             if (tokens1.length === 0 || tokens2.length === 0) return 0;
 
-            // 步骤2：提取物品主体词（判断是否为同一类物品，核心！）
             const mainObjectWords = ['手机','背包','钥匙','雨伞','水杯','课本','充电宝','耳机','平板','电脑'];
             const getMainObject = (tokens) => tokens.find(t => mainObjectWords.some(w => t.includes(w)));
             const main1 = getMainObject(tokens1);
             const main2 = getMainObject(tokens2);
-            // ✅ 核心约束：物品主体不同 → 相似度直接=0，彻底杜绝乱匹配！
             if (main1 && main2 && main1 !== main2) return 0;
             if ((main1 && !main2) || (!main1 && main2)) return 0;
 
-            // 步骤3：计算加权词交集相似度（核心词权重拉满）
             let totalWeight1 = 0, totalWeight2 = 0, matchWeight = 0;
             const tokenMap1 = new Map();
             const tokenMap2 = new Map();
-            // 构建词-权重映射
             tokens1.forEach(t => tokenMap1.set(t, getTokenWeight(t)));
             tokens2.forEach(t => tokenMap2.set(t, getTokenWeight(t)));
-            // 计算总权重+匹配权重
             tokenMap1.forEach((w, t) => totalWeight1 += w);
             tokenMap2.forEach((w, t) => totalWeight2 += w);
             tokenMap1.forEach((w1, t) => {
                 if (tokenMap2.has(t)) matchWeight += (w1 + tokenMap2.get(t)) / 2;
             });
             const weightSimilarity = totalWeight1 + totalWeight2 > 0 ? matchWeight / ((totalWeight1 + totalWeight2) / 2) : 0;
-
-            // 步骤4：计算最长公共子串相似度（解决短描述和长描述匹配度低的问题）
             const lcsSimilarity = longestCommonSubstring(text1, text2);
-
-            // 步骤5：融合加权相似度 + LCS相似度，归一化到0-1区间（最终相似度）
             const finalSimilarity = (weightSimilarity * 0.7 + lcsSimilarity * 0.3).toFixed(4) * 1;
-            return Math.min(finalSimilarity, 1); // 限制最大值为1
+            return Math.min(finalSimilarity, 1);
         }
 
-        /**
-         * 提取匹配核心特征（用于页面展示）
-         */
         function extractCommonFeatures(str1, str2) {
             const { tokens: t1 } = textPreprocess(str1);
             const { tokens: t2 } = textPreprocess(str2);
