@@ -281,8 +281,8 @@
                     <button class="btn" onclick="doMatch()">开始匹配核验</button>
                     <button class="btn btn-secondary" onclick="clearMatchResult()">清空结果</button>
                 </div>
-                <div class="hint">✅ 核心优化：<span class="red">品牌/颜色/物品类型优先匹配，细节不影响核心命中</span></div>
-                <div class="hint">✅ 推荐值0.3：「黑色华为手机」和「黑色华为Mate60手机」可100%匹配</div>
+                <div class="hint">✅ 核心优化：<span class="red">品牌+型号精准匹配，同品牌不同型号不强制匹配</span></div>
+                <div class="hint">✅ 推荐值0.3：「黑色华为Mate60」可匹配「黑色华为手机」「黑色华为Mate60」，不匹配「华为Mate40」</div>
             </div>
             <label>匹配结果（按相似度从高到低排序）：</label>
             <div class="result-box" id="matchResult">请设置阈值后点击「开始匹配核验」，需先添加失物和招领信息</div>
@@ -519,8 +519,9 @@
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
         }
 
-        // ✅ 核心优化：文本预处理（强化核心关键词识别）
+        // ✅ 核心优化：文本预处理（精准识别品牌+型号）
         function preprocessText(text) {
+            // 保留品牌、型号关键词，不随意替换
             text = text.replace(/[，。、；：""''（）【】《》·！？]/g, '').toLowerCase();
             const synonymMap = {
                 '手机': ['手机','智能机','电话','触屏机','智能手机'],
@@ -535,54 +536,122 @@
             for (const [core, synonyms] of Object.entries(synonymMap)) {
                 synonyms.forEach(syn => text = text.replace(new RegExp(syn, 'g'), core));
             }
-            return text.split(/\s+/).filter(word => word);
+            // 提取品牌、型号、颜色关键词（优先保留完整信息）
+            const brandModelRegex = /(华为|苹果|小米|oppo|vivo)\s*(\w+)?/g;
+            let extraWords = [];
+            let match;
+            while ((match = brandModelRegex.exec(text)) !== null) {
+                if (match[1]) extraWords.push(match[1]);
+                if (match[2]) extraWords.push(match[2]);
+            }
+            let words = text.split(/\s+/).filter(word => word);
+            words = [...new Set([...words, ...extraWords])];
+            return words;
         }
 
-        // ✅ 重中之重：全新优化相似度算法 - 核心关键词优先匹配，彻底解决匹配失败问题
+        // ✅ 重中之重：精准匹配算法（解决「乱匹配」核心问题）
         function calculateSimilarity(str1, str2) {
-            // 1. 定义核心权重词库（品牌/颜色/物品类型 权重最高）
-            const CORE_WORDS = ['手机','背包','课本','雨伞','钥匙','充电宝','华为','苹果','小米','OPPO','vivo','黑色','白色','红色','蓝色','粉色','黄色','绿色'];
+            // 1. 定义核心分类：物品类型、品牌、颜色（基础匹配项）
             const MAIN_TYPE = ['手机','背包','课本','雨伞','钥匙','充电宝'];
-            
+            const BRANDS = ['华为','苹果','小米','OPPO','vivo'];
+            const COLORS = ['黑色','白色','红色','蓝色','粉色','黄色','绿色','灰色','银色'];
+
             // 2. 预处理+提取关键词
             const words1 = preprocessText(str1);
             const words2 = preprocessText(str2);
-            
-            // 3. 第一步校验：必须是同类型物品，否则直接不匹配
+
+            // 3. 第一步：必须是同类型物品，否则直接不匹配（排除跨类别乱匹配）
             const type1 = MAIN_TYPE.find(t => words1.includes(t)) || '';
             const type2 = MAIN_TYPE.find(t => words2.includes(t)) || '';
             if (type1 !== type2) return 0;
 
-            // 4. 核心词匹配（权重×2）、普通词匹配（权重×1）
-            let coreMatch = 0, normalMatch = 0;
-            const core1 = words1.filter(w => CORE_WORDS.includes(w));
-            const core2 = words2.filter(w => CORE_WORDS.includes(w));
-            const normal1 = words1.filter(w => !CORE_WORDS.includes(w));
-            const normal2 = words2.filter(w => !CORE_WORDS.includes(w));
-            
-            core1.forEach(w => core2.includes(w) && (coreMatch += 2));
-            normal1.forEach(w => normal2.includes(w) && (normalMatch += 1));
+            // 4. 第二步：计算各项匹配权重（品牌>型号>颜色>普通词）
+            let brandScore = 0, modelScore = 0, colorScore = 0, normalScore = 0;
 
-            // 5. 计算最终相似度
-            const totalMatch = coreMatch + normalMatch;
-            const totalWords = [...new Set([...words1, ...words2])].length;
-            let similarity = totalWords === 0 ? 0 : (totalMatch / totalWords).toFixed(2) * 1;
+            // 品牌匹配（权重3分）
+            const brand1 = BRANDS.find(b => words1.includes(b)) || '';
+            const brand2 = BRANDS.find(b => words2.includes(b)) || '';
+            if (brand1 && brand2 && brand1 === brand2) brandScore = 3;
 
-            // 6. 保底机制：同类型+核心词≥2个匹配 → 相似度至少0.3（完美适配默认阈值）
-            const sameCore = core1.filter(w => core2.includes(w)).length;
-            if (type1 && sameCore >= 2) similarity = Math.max(similarity, 0.3);
-            
+            // 型号匹配（权重2分，提取品牌后的型号关键词）
+            const getModel = (words, brand) => {
+                if (!brand) return '';
+                // 找到品牌后面的连续关键词（即型号）
+                const brandIndex = words.indexOf(brand);
+                if (brandIndex !== -1 && brandIndex + 1 < words.length) {
+                    return words[brandIndex + 1];
+                }
+                // 直接匹配常见型号关键词
+                const modelWords = words.filter(w => !MAIN_TYPE.includes(w) && !BRANDS.includes(w) && !COLORS.includes(w));
+                return modelWords[0] || '';
+            };
+            const model1 = getModel(words1, brand1);
+            const model2 = getModel(words2, brand2);
+            if (model1 && model2 && model1 === model2) {
+                modelScore = 2; // 型号完全一致
+            } else if ((model1 && !model2) || (!model1 && model2)) {
+                modelScore = 1; // 一方有型号、一方无（不扣分，保留匹配可能）
+            }
+
+            // 颜色匹配（权重2分）
+            const color1 = COLORS.filter(c => words1.includes(c));
+            const color2 = COLORS.filter(c => words2.includes(c));
+            if (color1.length && color2.length && color1.some(c => color2.includes(c))) {
+                colorScore = 2;
+            }
+
+            // 普通词匹配（权重1分，细节词）
+            const normal1 = words1.filter(w => !MAIN_TYPE.includes(w) && !BRANDS.includes(w) && !COLORS.includes(w) && !model1.includes(w));
+            const normal2 = words2.filter(w => !MAIN_TYPE.includes(w) && !BRANDS.includes(w) && !COLORS.includes(w) && !model2.includes(w));
+            normal1.forEach(w => normal2.includes(w) && (normalScore += 1));
+
+            // 5. 计算总分和相似度（总分最高10分）
+            const totalScore = brandScore + modelScore + colorScore + normalScore;
+            const maxPossibleScore = 3 + 2 + 2 + Math.max(normal1.length, normal2.length);
+            let similarity = maxPossibleScore === 0 ? 0 : (totalScore / maxPossibleScore).toFixed(2) * 1;
+
+            // 6. 精准匹配规则（避免乱匹配）
+            // 规则1：同品牌+同型号+同颜色 → 相似度≥0.8
+            if (brandScore === 3 && modelScore === 2 && colorScore === 2) {
+                similarity = Math.max(similarity, 0.8);
+            }
+            // 规则2：同品牌+同颜色（型号一方有一方无）→ 相似度≥0.5
+            if (brandScore === 3 && colorScore === 2 && modelScore === 1) {
+                similarity = Math.max(similarity, 0.5);
+            }
+            // 规则3：同品牌+不同型号 → 相似度≤0.25（不匹配默认阈值0.3）
+            if (brandScore === 3 && model1 && model2 && model1 !== model2) {
+                similarity = Math.min(similarity, 0.25);
+            }
+            // 规则4：无品牌+同颜色+同类型 → 相似度0.3（保底匹配，不瞎凑）
+            if (brandScore === 0 && colorScore === 2 && type1 === type2) {
+                similarity = Math.max(similarity, 0.3);
+            }
+
             return similarity;
         }
 
-        // ✅ 优化：获取共同特征（核心特征标红）
+        // ✅ 优化：获取共同特征（精准显示匹配依据）
         function getCommonFeatures(str1, str2) {
-            const CORE_WORDS = ['手机','背包','课本','雨伞','钥匙','充电宝','华为','苹果','小米','OPPO','vivo','黑色','白色','红色','蓝色'];
-            const keywords1 = new Set(preprocessText(str1));
-            const keywords2 = new Set(preprocessText(str2));
-            let common = [...keywords1].filter(word => keywords2.has(word) && word.length > 1);
-            // 核心特征高亮显示
-            return common.map(word => CORE_WORDS.includes(word) ? `【${word}】` : word);
+            const MAIN_TYPE = ['手机','背包','课本','雨伞','钥匙','充电宝'];
+            const BRANDS = ['华为','苹果','小米','OPPO','vivo'];
+            const COLORS = ['黑色','白色','红色','蓝色','粉色','黄色','绿色','灰色','银色'];
+            const words1 = new Set(preprocessText(str1));
+            const words2 = new Set(preprocessText(str2));
+            let common = [...words1].filter(word => words2.has(word) && word.length > 1);
+            // 按重要性排序：品牌→型号→颜色→普通词
+            const sortByImportance = (a, b) => {
+                const getWeight = (word) => {
+                    if (BRANDS.includes(word)) return 3;
+                    if (!MAIN_TYPE.includes(word) && !COLORS.includes(word) && !BRANDS.includes(word)) return 2;
+                    if (COLORS.includes(word)) return 1;
+                    return 0;
+                };
+                return getWeight(b) - getWeight(a);
+            };
+            common.sort(sortByImportance);
+            // 核心特征加【】标注
+            return common.map(word => (BRANDS.includes(word) || COLORS.includes(word)) ? `【${word}】` : word);
         }
     </script>
 </body>
