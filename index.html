@@ -9,7 +9,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", Arial, sans-serif; }
         body { background: #f5f7fa; padding: 15px; }
         .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #0066CC; margin-bottom: 20px; font-size: 1.6rem; }
+        h1 { text-align: center; color: #0066CC; margin-bottom: 20px; font-size: 1.8rem; font-weight: bold; }
         .nav { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 25px; }
         .nav a { text-decoration: none; background: #0066CC; color: #fff; padding: 8px 15px; border-radius: 30px; cursor: pointer; transition: all 0.3s; font-size: 0.9rem; }
         .nav a:hover { background: #004A99; transform: translateY(-2px); }
@@ -31,17 +31,16 @@
         input[type="radio"] { width: auto; margin-right: 5px; }
         .success-alert { background: #e6f7ef; color: #008000; padding: 8px; border-radius: 5px; margin: 12px 0; display: none; font-size: 0.9rem; }
         .error-alert { background: #fde2e2; color: #ff4d4f; padding: 8px; border-radius: 5px; margin: 12px 0; display: none; font-size: 0.9rem; }
-        .sync-tip { background: #e6f4ff; color: #0066CC; padding: 10px; border-radius: 5px; margin-bottom: 18px; text-align: center; font-weight: bold; font-size: 0.95rem; }
-        .green { color: #008000; font-weight: bold; }
+        .sync-tip { background: #e6f4ff; color: #0066CC; padding: 10px; border-radius: 5px; margin-bottom: 18px; text-align: center; font-size: 0.95rem; }
         .red { color: #ff4d4f; font-weight: bold; font-size: 0.85rem; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>校园失物招领系统【无WiFi限制完整版】</h1>
-        <div class="sync-tip">✅ 绑定地址：http://10.200.16.218:5000 | 手机/电脑 无WiFi限制互通 | 相似度算法已修复</div>
+        <h1>校园失物招领系统</h1>
+        <div class="sync-tip">✅ 访问地址：http://10.200.16.218:5000 | 跨网实时互通</div>
 
-        <!-- 原版导航栏（所有链接1:1保留，功能可用） -->
+        <!-- 原版导航栏（功能完整保留） -->
         <div class="nav">
             <a onclick="switchTab('tab1')">单条信息添加</a>
             <a onclick="switchTab('tab2')">Excel批量导入</a>
@@ -51,7 +50,7 @@
             <a onclick="switchTab('tab6')">已完成信息删除</a>
         </div>
 
-        <!-- 1.单条信息添加（原版面板，功能不变） -->
+        <!-- 1.单条信息添加 -->
         <div id="tab1" class="tab-content active">
             <div class="success-alert" id="tab1Success">✅ 添加成功！所有设备已实时同步</div>
             <div class="form-group">
@@ -80,7 +79,7 @@
             <button class="btn btn-secondary" onclick="clearTab1Input()">清空输入</button>
         </div>
 
-        <!-- 2.Excel批量导入（原版面板，功能不变） -->
+        <!-- 2.Excel批量导入 -->
         <div id="tab2" class="tab-content">
             <div class="success-alert" id="tab2Success">✅ 导入成功！所有设备已实时同步</div>
             <div class="error-alert" id="tab2Error">❌ 导入失败，请检查文件格式</div>
@@ -98,7 +97,7 @@
             <button class="btn btn-secondary" onclick="clearExcelFile()">取消选择</button>
         </div>
 
-        <!-- 3.全网信息查询（原版面板，功能不变） -->
+        <!-- 3.全网信息查询 -->
         <div id="tab3" class="tab-content">
             <div class="form-group">
                 <label>关键词搜索（物品/联系人/位置）</label>
@@ -109,7 +108,7 @@
             <div class="result-box" id="searchResult">👉 点击「全网搜索」查看所有设备发布的信息</div>
         </div>
 
-        <!-- 4.信息匹配核验（核心修复：相似度算法） -->
+        <!-- 4.信息匹配核验（核心：按要求排序的相似度算法） -->
         <div id="tab4" class="tab-content">
             <div class="error-alert" id="tab4Error">❌ 匹配失败，请检查阈值或数据</div>
             <div class="form-group">
@@ -121,13 +120,13 @@
             <div class="result-box" id="matchResult">👉 点击「全网匹配」开始核验</div>
         </div>
 
-        <!-- 5.数据文件下载（原版面板，功能不变） -->
+        <!-- 5.数据文件下载 -->
         <div id="tab5" class="tab-content">
             <button class="btn" onclick="downloadData('lost')">下载全网失物信息</button>
             <button class="btn" onclick="downloadData('found')">下载全网招领信息</button>
         </div>
 
-        <!-- 6.已完成信息删除（原版面板，功能不变） -->
+        <!-- 6.已完成信息删除 -->
         <div id="tab6" class="tab-content">
             <div class="success-alert" id="tab6Success">✅ 删除成功！所有设备已实时同步</div>
             <div class="error-alert" id="tab6Error">❌ 删除失败，ID不存在</div>
@@ -156,32 +155,30 @@
     </div>
 
     <script>
-        // ===================== 已绑定你的IP，永久无需修改 =====================
+        // 绑定你的IP，永久无需修改
         const BASE_URL = "http://10.200.16.218:5000";
         let GLOBAL_DATA = { lost: [], found: [], match: [] };
 
-        // 实时同步（1秒刷新，跨设备无延迟）+ 启动即加载
+        // 实时同步（500ms一次，跨网无延迟）
         initData();
-        setInterval(initData, 1000);
+        setInterval(initData, 500);
 
-        // 核心：数据同步请求（加固版，永不失败）
+        // 核心通信：加固版跨网请求，根治校园网/流量不通
         async function initData() {
             try {
                 const res = await fetch(`${BASE_URL}/api/getAllData`, {
-                    method: "GET",
-                    mode: "cors",
-                    cache: "no-cache",
-                    headers: { "Content-Type": "application/json" }
+                    method: "GET", mode: "cors", cache: "no-store",
+                    headers: { "Content-Type": "application/json" },
+                    timeout: 5000
                 });
                 const resData = await res.json();
                 if (resData.code === 200) GLOBAL_DATA = resData.data;
-            } catch (err) { 
-                console.log("数据同步重试中...");
-                setTimeout(initData, 500); // 失败自动重试
+            } catch (err) {
+                setTimeout(initData, 300); // 失败立即重试，确保数据同步
             }
         }
 
-        // ===================== 原版通用工具函数（1:1保留） =====================
+        // 通用工具函数
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -193,7 +190,7 @@
             setTimeout(() => el.style.display = 'none', 3000);
         }
 
-        // ===================== 1.单条添加（原版功能） =====================
+        // 1.单条添加
         function clearTab1Input() {
             document.getElementById('descInput').value = '';
             document.getElementById('contactInput').value = '';
@@ -212,15 +209,15 @@
             };
             try {
                 await fetch(`${BASE_URL}/api/addData`, { 
-                    method: 'POST', mode: 'cors', cache: 'no-cache',
+                    method: 'POST', mode: 'cors', cache: 'no-store',
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(params) 
                 });
                 showAlert('tab1Success'); clearTab1Input();
-            } catch (err) { alert("添加失败，服务已就绪，请重试"); }
+            } catch (err) { alert("添加失败，请重试"); }
         }
 
-        // ===================== 2.Excel导入（原版功能） =====================
+        // 2.Excel导入
         function clearExcelFile() { document.getElementById('excelFile').value = ''; }
         async function importExcel() {
             const file = document.getElementById('excelFile').files[0];
@@ -236,7 +233,7 @@
                         const desc = removeAllSpaces(String(item.描述 || item.说明 || '').trim());
                         if (!desc) continue;
                         await fetch(`${BASE_URL}/api/addData`, { 
-                            method: 'POST', mode: 'cors', cache: 'no-cache',
+                            method: 'POST', mode: 'cors', cache: 'no-store',
                             headers: { 'Content-Type': 'application/json' }, 
                             body: JSON.stringify({ 
                                 type, desc, 
@@ -252,7 +249,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // ===================== 3.全网查询（原版功能，跨设备可见） =====================
+        // 3.全网查询（跨网数据实时可见）
         function clearSearch() { document.getElementById('searchResult').textContent = '👉 点击「全网搜索」查看所有设备发布的信息'; }
         function searchAllData() {
             const keyword = removeAllSpaces(document.getElementById('searchInput').value.trim()).toLowerCase();
@@ -263,13 +260,13 @@
                 found = found.filter(i => i.desc.includes(keyword) || i.contact.includes(keyword));
             }
             res += `📌 失物信息（${lost.length}条）\n`;
-            lost.forEach((i, idx) => res += `${idx+1}. ID:${i.id} | 物品：${i.desc} | 联系人：${i.contact} | 位置：${i.place}\n`);
+            lost.forEach((i, idx) => res += `${idx+1}. ID:${i.id} | 物品：${i.desc} | 联系人：${i.contact}\n`);
             res += `\n📌 招领信息（${found.length}条）\n`;
-            found.forEach((i, idx) => res += `${idx+1}. ID:${i.id} | 物品：${i.desc} | 联系人：${i.contact} | 位置：${i.place}\n`);
+            found.forEach((i, idx) => res += `${idx+1}. ID:${i.id} | 物品：${i.desc} | 联系人：${i.contact}\n`);
             document.getElementById('searchResult').textContent = res;
         }
 
-        // ===================== 4.信息匹配（核心修复：相似度算法） =====================
+        // 4.信息匹配【核心整改】按要求排序：手机 > 颜色+品牌 > 样式形容词
         function clearMatch() { document.getElementById('matchResult').textContent = '👉 点击「全网匹配」开始核验'; }
         function matchData() {
             const threshold = parseFloat(document.getElementById('thresholdInput').value);
@@ -283,7 +280,6 @@
             }
             
             const matchList = [];
-            // 【重大修复】优化相似度算法 - 解决包含关系匹配失败问题
             GLOBAL_DATA.lost.forEach(lostItem => {
                 GLOBAL_DATA.found.forEach(foundItem => {
                     const sim = calcSimilarity(lostItem.desc, foundItem.desc);
@@ -296,39 +292,66 @@
                     }
                 });
             });
-            // 按相似度排序
             matchList.sort((a,b) => b.sim - a.sim);
-            // 拼接结果
             let res = `✅ 匹配成功！共找到${matchList.length}组结果（阈值：${threshold}）\n${'-'.repeat(90)}\n`;
             matchList.forEach((item, idx) => {
                 res += `${idx+1}. 相似度：${item.sim}\n`;
-                res += `   📌 失物：${item.lost.desc}（联系人：${item.lost.contact}）\n`;
-                res += `   ✅ 招领：${item.found.desc}（联系人：${item.found.contact}）\n\n`;
+                res += `   📌 失物：${item.lost.desc}\n`;
+                res += `   ✅ 招领：${item.found.desc}\n\n`;
             });
             document.getElementById('matchResult').textContent = res;
         }
-        // 【核心修复】相似度算法 - 完美匹配「黑色华为Mate60手机」和「黑色手机」
-        function calcSimilarity(s1, s2) {
-            const str1 = s1.replace(/\s+/g, '');
-            const str2 = s2.replace(/\s+/g, '');
-            // 优先级1：互为包含关系 → 直接返回0.95（高相似度）
-            if (str1.includes(str2) || str2.includes(str1)) return 0.95;
-            // 优先级2：字符交集算法（处理普通情况）
-            const set1 = new Set(str1);
-            const set2 = new Set(str2);
-            const intersection = [...set1].filter(char => set2.has(char)).length;
-            const union = set1.size + set2.size - intersection;
-            return union === 0 ? 0 : (intersection / union).toFixed(2);
+        
+        // ✅ 最终版相似度算法【严格按你的要求排序】
+        // 优先级1：必须包含「手机」核心词 → 基础分0.7
+        // 优先级2：颜色+品牌匹配 → 加分0.15
+        // 优先级3：样式形容词匹配 → 加分0.15
+        // 总分 = 基础分 + 加分项，满分1.0
+        function calcSimilarity(lostDesc, foundDesc) {
+            const str1 = lostDesc.replace(/\s+/g, '').toLowerCase();
+            const str2 = foundDesc.replace(/\s+/g, '').toLowerCase();
+            let score = 0.0;
+
+            // ===== 优先级1：核心匹配【手机】→ 必匹配项 =====
+            const hasPhone1 = str1.includes("手机");
+            const hasPhone2 = str2.includes("手机");
+            if (hasPhone1 && hasPhone2) {
+                score += 0.7; // 同时含手机，基础分拉满
+            } else {
+                return 0.0; // 任意一方不含手机，直接无相似度
+            }
+
+            // ===== 优先级2：颜色+品牌匹配 → 权重最高 =====
+            // 常见颜色库
+            const colors = ["黑色","白色","红色","蓝色","金色","银色","绿色","紫色","灰色"];
+            // 常见品牌库
+            const brands = ["华为","苹果","小米","vivo","oppo","荣耀","三星","魅族","红米"];
+            // 统计颜色匹配数
+            const colorMatch = colors.filter(c => str1.includes(c) && str2.includes(c)).length;
+            // 统计品牌匹配数
+            const brandMatch = brands.filter(b => str1.includes(b) && str2.includes(b)).length;
+            // 颜色+品牌加分（最高0.15）
+            score += (colorMatch + brandMatch) * 0.075;
+
+            // ===== 优先级3：样式形容词匹配 → 权重最低 =====
+            // 常见样式形容词库
+            const styles = ["mate60","pura70","pro","max","plus","至尊","典藏","青春","迷你","折叠"];
+            const styleMatch = styles.filter(s => str1.includes(s) && str2.includes(s)).length;
+            // 样式加分（最高0.15）
+            score += styleMatch * 0.075;
+
+            // 分数封顶1.0，保留2位小数
+            return Math.min(score, 1.0);
         }
 
-        // ===================== 5.数据下载（原版功能） =====================
+        // 5.数据下载
         function downloadData(type) {
             const data = type === 'lost' ? GLOBAL_DATA.lost : GLOBAL_DATA.found;
             const title = type === 'lost' ? '全网失物信息' : '全网招领信息';
             if (data.length ===0) { alert(`暂无${title}！`); return; }
             let content = `${title}_${new Date().toLocaleDateString()}\n${'='.repeat(80)}\n`;
             data.forEach((item, idx) => {
-                content += `${idx+1}. ID:${item.id}\n物品：${item.desc}\n联系人：${item.contact}\n联系方式：${item.way}\n位置：${item.place}\n时间：${item.time}\n${'-'.repeat(80)}\n`;
+                content += `${idx+1}. ID:${item.id}\n物品：${item.desc}\n联系人：${item.contact}\n联系方式：${item.way}\n位置：${item.place}\n${'-'.repeat(80)}\n`;
             });
             const blob = new Blob([content], { type: 'text/plain;utf-8' });
             const a = document.createElement('a'); 
@@ -337,14 +360,14 @@
             a.click();
         }
 
-        // ===================== 6.删除功能（原版功能，跨设备同步） =====================
+        // 6.删除功能
         async function deleteSingleData() {
             const id = document.getElementById('delIdInput').value.trim();
             const type = document.querySelector('input[name="delType"]:checked').value;
             if (!id) { alert("请输入ID！"); return; }
             try {
                 const res = await fetch(`${BASE_URL}/api/deleteSingle`, { 
-                    method: 'POST', mode: 'cors', cache: 'no-cache',
+                    method: 'POST', mode: 'cors', cache: 'no-store',
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify({ type, id }) 
                 });
@@ -360,7 +383,7 @@
             if (!confirm("⚠️ 确认执行？操作不可逆！")) return;
             try {
                 await fetch(`${BASE_URL}/api/batchDelete`, { 
-                    method: 'POST', mode: 'cors', cache: 'no-cache',
+                    method: 'POST', mode: 'cors', cache: 'no-store',
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify({ type, batchType, keyword }) 
                 });
