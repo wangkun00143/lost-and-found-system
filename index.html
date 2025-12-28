@@ -1,76 +1,69 @@
-# campus_network_integration.py
-import requests
-import json
-from datetime import datetime
-
-class CampusNetworkIntegration:
-    def __init__(self, campus_api_url, auth_token):
-        self.api_url = campus_api_url
-        self.headers = {
-            'Authorization': f'Bearer {auth_token}',
-            'Content-Type': 'application/json'
-        }
-    
-    def sync_to_campus_network(self, item_data):
-        """将本地数据同步到校园网"""
-        try:
-            response = requests.post(
-                f'{self.api_url}/lost-found/items',
-                headers=self.headers,
-                json=item_data,
-                timeout=10
-            )
-            return response.status_code == 200
-        except Exception as e:
-            print(f"同步失败: {e}")
-            return False
-    
-    def get_campus_data(self):
-        """从校园网获取数据"""
-        try:
-            response = requests.get(
-                f'{self.api_url}/lost-found/items',
-                headers=self.headers,
-                timeout=10
-            )
-            if response.status_code == 200:
-                return response.json()
-            return []
-        except Exception as e:
-            print(f"获取数据失败: {e}")
-            return []
-    
-    def publish_to_campus_bulletin(self, match_result):
-        """将匹配结果发布到校园公告"""
-        bulletin_data = {
-            'title': '失物招领匹配通知',
-            'content': self.format_bulletin_content(match_result),
-            'publish_time': datetime.now().isoformat(),
-            'priority': 'normal'
-        }
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园失物招领系统</title>
+    <style>
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .nav-tabs { margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .result-item { border: 1px solid #ddd; padding: 15px; margin: 10px 0; }
+        .match-high { background-color: #f0fff0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>校园失物招领系统</h1>
         
-        try:
-            response = requests.post(
-                f'{self.api_url}/bulletin/publish',
-                headers=self.headers,
-                json=bulletin_data,
-                timeout=10
-            )
-            return response.status_code == 200
-        except Exception as e:
-            print(f"公告发布失败: {e}")
-            return False
-    
-    def format_bulletin_content(self, match_result):
-        """格式化公告内容"""
-        content = f"""失物招领匹配成功通知：
+        <ul class="nav nav-tabs">
+            <li><a href="#add" data-toggle="tab">发布信息</a></li>
+            <li><a href="#search" data-toggle="tab">搜索查询</a></li>
+            <li><a href="#match" data-toggle="tab">智能匹配</a></li>
+        </ul>
         
-发现以下失物与招领信息高度匹配：
-• 失物描述：{match_result['失物描述']}
-• 招领描述：{match_result['招领描述']}
-• 匹配相似度：{match_result['相似度']}
-• 联系方式：{match_result['招领人联系方式']}
+        <div class="tab-content">
+            <div id="add" class="tab-pane">
+                <form id="addForm">
+                    <div class="form-group">
+                        <label>信息类型：</label>
+                        <select name="type" required>
+                            <option value="lost">失物信息</option>
+                            <option value="found">招领信息</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>物品描述：</label>
+                        <input type="text" name="desc" required>
+                    </div>
+                    <button type="submit">发布信息</button>
+                </form>
+            </div>
+            
+            <div id="search" class="tab-pane">
+                <input type="text" id="searchKeyword" placeholder="输入关键词">
+                <button onclick="searchItems()">搜索</button>
+                <div id="searchResults"></div>
+            </div>
+            
+            <div id="match" class="tab-pane">
+                <button onclick="runMatching()">执行智能匹配</button>
+                <div id="matchResults"></div>
+            </div>
+        </div>
+    </div>
 
-请相关同学尽快联系认领。
-"""
-        return content
+    <script>
+        // 前端JavaScript代码
+        async function searchItems() {
+            const keyword = document.getElementById('searchKeyword').value;
+            const response = await fetch(`/search?keyword=${encodeURIComponent(keyword)}`);
+            const results = await response.json();
+            
+            // 显示结果
+            displayResults(results);
+        }
+    </script>
+</body>
+</html>
