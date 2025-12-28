@@ -3,342 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>校园失物招领系统</title>
+    <title>失物招领系统</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", Arial, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑"; }
         body { background: #f5f7fa; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #0066CC; margin-bottom: 30px; }
         .nav { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 30px; }
-        .nav a { text-decoration: none; background: #0066CC; color: #fff; padding: 10px 20px; border-radius: 30px; cursor: pointer; transition: all 0.3s; }
-        .nav a:hover { background: #004A99; transform: translateY(-2px); }
-        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .nav a { text-decoration: none; background: #0066CC; color: #fff; padding: 10px 20px; border-radius: 30px; cursor: pointer; }
+        .tab-content { display: none; }
         .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-        input:focus { outline: none; border-color: #0066CC; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; }
         .btn { background: #0066CC; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px; }
-        .btn:hover { background: #004A99; }
         .btn-danger { background: #ff4d4f; }
-        .btn-danger:hover { background: #d9363e; }
-        .btn-secondary { background: #666; }
-        .result-box { width: 100%; height: 350px; border: 1px solid #ddd; border-radius: 5px; padding: 15px; overflow-y: auto; margin-top: 10px; background: #f9f9f9; font-size: 13px; line-height: 1.8; white-space: pre-wrap; }
-        .radio-group { display: flex; gap: 25px; margin-bottom: 8px; align-items: center; }
-        .radio-group label { font-weight: normal; cursor: pointer; }
-        input[type="radio"] { width: auto; margin-right: 5px; }
+        .result-box { width: 100%; height: 350px; border: 1px solid #ddd; border-radius: 5px; padding: 15px; overflow-y: auto; margin-top: 10px; background: #f9f9f9; font-size: 13px; line-height: 1.8; }
         .success-alert { background: #e6f7ef; color: #008000; padding: 10px; border-radius: 5px; margin: 15px 0; display: none; }
         .error-alert { background: #fde2e2; color: #ff4d4f; padding: 10px; border-radius: 5px; margin: 15px 0; display: none; }
         .sync-tip { background: #e6f4ff; color: #0066CC; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold; }
-        .green { color: #008000; font-weight: bold; }
-        .red { color: #ff4d4f; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>校园失物招领系统【全网实时互通版】</h1>
-        <div class="sync-tip">✅ 已绑定你的服务器：http://10.200.16.218:5000 | 电脑/手机/平板 实时秒同步</div>
+        <h1>公网版失物招领系统（无需同一WiFi）</h1>
+        <div class="sync-tip">✅ 公网地址：待部署后替换为你的公网域名</div>
 
         <!-- 导航栏 -->
         <div class="nav">
-            <a onclick="switchTab('tab1')">单条信息添加</a>
-            <a onclick="switchTab('tab2')">Excel批量导入</a>
-            <a onclick="switchTab('tab3')">全网信息查询</a>
-            <a onclick="switchTab('tab4')">信息匹配核验</a>
-            <a onclick="switchTab('tab5')">数据文件下载</a>
-            <a onclick="switchTab('tab6')">已完成信息删除</a>
+            <a onclick="switchTab('tab1')">单条添加</a>
+            <a onclick="switchTab('tab2')">Excel导入</a>
+            <a onclick="switchTab('tab3')">全网查询</a>
+            <a onclick="switchTab('tab4')">信息匹配</a>
+            <a onclick="switchTab('tab5')">数据下载</a>
+            <a onclick="switchTab('tab6')">信息删除</a>
         </div>
 
         <!-- 1.单条添加 -->
         <div id="tab1" class="tab-content active">
-            <div class="success-alert" id="tab1Success">✅ 添加成功！所有设备已实时同步</div>
+            <div class="success-alert" id="tab1Success">✅ 添加成功！公网同步</div>
             <div class="form-group">
-                <div class="radio-group">
-                    <label><input type="radio" name="infoType" value="lost" checked> 失物信息</label>
-                    <label><input type="radio" name="infoType" value="found"> 招领信息</label>
+                <div style="display: flex; gap:25px;">
+                    <label><input type="radio" name="infoType" value="lost" checked> 失物</label>
+                    <label><input type="radio" name="infoType" value="found"> 招领</label>
                 </div>
             </div>
             <div class="form-group">
-                <label>物品描述【必填，越详细越好】</label>
-                <input id="descInput" placeholder="例：黑色华为Mate60手机/红色双肩包/校园卡（学号123456）">
-            </div>
-            <div class="form-group">
-                <label>联系人</label>
-                <input id="contactInput" placeholder="姓名/班级/昵称">
-            </div>
-            <div class="form-group">
-                <label>联系方式【建议填写】</label>
-                <input id="wayInput" placeholder="电话/微信/QQ">
-            </div>
-            <div class="form-group">
-                <label>丢失/存放位置</label>
-                <input id="placeInput" placeholder="教学楼A座/图书馆3楼/食堂2楼">
+                <label>物品描述【必填】</label>
+                <input id="descInput" placeholder="例：黑色华为Mate60手机">
             </div>
             <button class="btn" onclick="addSingleInfo()">确认添加</button>
-            <button class="btn btn-secondary" onclick="clearTab1Input()">清空输入</button>
         </div>
 
         <!-- 2.Excel导入 -->
         <div id="tab2" class="tab-content">
-            <div class="success-alert" id="tab2Success">✅ 导入成功！所有设备已实时同步</div>
-            <div class="error-alert" id="tab2Error">❌ 导入失败，请检查文件格式</div>
-            <div class="form-group">
-                <div class="radio-group">
-                    <label><input type="radio" name="importType" value="lost" checked> 失物信息</label>
-                    <label><input type="radio" name="importType" value="found"> 招领信息</label>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>选择Excel文件（列名：描述/联系人/联系方式/位置）</label>
-                <input type="file" id="excelFile" accept=".xlsx,.xls">
-            </div>
+            <div class="success-alert" id="tab2Success">✅ 导入成功！</div>
+            <input type="file" id="excelFile" accept=".xlsx,.xls">
             <button class="btn" onclick="importExcel()">批量导入</button>
-            <button class="btn btn-secondary" onclick="clearExcelFile()">取消选择</button>
         </div>
 
         <!-- 3.全网查询 -->
         <div id="tab3" class="tab-content">
-            <div class="form-group">
-                <label>关键词搜索（物品/联系人/位置）</label>
-                <input id="searchInput" placeholder="例：华为/校园卡/图书馆">
-            </div>
             <button class="btn" onclick="searchAllData()">全网搜索</button>
-            <button class="btn btn-secondary" onclick="clearSearch()">清空结果</button>
-            <div class="result-box" id="searchResult">👉 点击「全网搜索」查看所有设备发布的信息</div>
+            <div class="result-box" id="searchResult">点击搜索查看所有信息</div>
         </div>
 
         <!-- 4.信息匹配 -->
         <div id="tab4" class="tab-content">
-            <div class="error-alert" id="tab4Error">❌ 匹配失败，请检查阈值或数据</div>
-            <div class="form-group">
-                <label>相似度阈值（0.5-0.95，推荐0.6）</label>
-                <input type="number" id="thresholdInput" value="0.6" min="0.5" max="0.95" step="0.01">
-            </div>
             <button class="btn" onclick="matchData()">全网匹配</button>
-            <button class="btn btn-secondary" onclick="clearMatch()">清空结果</button>
-            <div class="result-box" id="matchResult">👉 点击「全网匹配」开始核验</div>
+            <div class="result-box" id="matchResult">点击匹配查看结果</div>
         </div>
 
         <!-- 5.数据下载 -->
         <div id="tab5" class="tab-content">
-            <button class="btn" onclick="downloadData('lost')">下载全网失物信息</button>
-            <button class="btn" onclick="downloadData('found')">下载全网招领信息</button>
+            <button class="btn" onclick="downloadData('lost')">下载失物信息</button>
+            <button class="btn" onclick="downloadData('found')">下载招领信息</button>
         </div>
 
         <!-- 6.信息删除 -->
         <div id="tab6" class="tab-content">
-            <div class="success-alert" id="tab6Success">✅ 删除成功！所有设备已实时同步</div>
-            <div class="error-alert" id="tab6Error">❌ 删除失败，ID不存在</div>
-            <div class="form-group">
-                <div class="radio-group">
-                    <label><input type="radio" name="delType" value="lost" checked> 失物信息</label>
-                    <label><input type="radio" name="delType" value="found"> 招领信息</label>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>精准单条删除【推荐】（ID从查询页复制）</label>
-                <input id="delIdInput" placeholder="例：1751234567890">
-                <button class="btn btn-danger" style="margin-top:10px" onclick="deleteSingleData()">确认删除</button>
-            </div>
-            <div style="margin-top:25px;border-top:1px dashed #ddd;padding-top:20px;">
-                <label>批量/清空删除【高危】</label>
-                <div class="radio-group">
-                    <label><input type="radio" name="batchType" value="clear" checked> 清空全部</label>
-                    <label><input type="radio" name="batchType" value="key"> 关键词删除</label>
-                </div>
-                <input id="delKeyInput" placeholder="输入关键词（例：华为/校园卡）" style="margin-top:8px;">
-                <div class="red" style="font-size:12px;margin-top:5px;">⚠️ 操作不可逆，确认后再执行！</div>
-                <button class="btn btn-danger" style="margin-top:10px" onclick="batchDelete()">确认操作</button>
-            </div>
+            <div class="success-alert" id="tab6Success">✅ 删除成功！</div>
+            <input id="delIdInput" placeholder="输入ID">
+            <button class="btn btn-danger" onclick="deleteSingleData()">删除</button>
         </div>
     </div>
 
     <script>
-        // ===================== 已固定为你的服务器地址，无需修改！=====================
-        const BASE_URL = "http://10.200.16.218:5000";
+        // 待部署后，替换为你的公网后端域名（例：https://your-server.onrender.com）
+        const BASE_URL = "https://your-server.onrender.com";
         let GLOBAL_DATA = { lost: [], found: [], match: [] };
 
-        // 初始化+实时轮询（每1秒同步一次，实现秒更）
+        // 实时同步
         initData();
         setInterval(initData, 1000);
 
-        // 核心方法：获取后端数据
         async function initData() {
             try {
                 const res = await fetch(`${BASE_URL}/api/getAllData`);
                 const resData = await res.json();
                 if (resData.code === 200) GLOBAL_DATA = resData.data;
-            } catch (err) { console.error("数据同步失败：", err); }
+            } catch (err) { console.error("同步失败：", err); }
         }
 
-        // 通用工具方法
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            document.querySelectorAll('.success-alert, .error-alert').forEach(a => a.style.display = 'none');
-        }
-        function removeAllSpaces(str) { return str ? str.replace(/\s+/g, '') : ''; }
-        function showAlert(id, text, isSuccess = true) {
-            const el = document.getElementById(id); el.textContent = text; el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 3000);
         }
 
         // 1.单条添加
-        function clearTab1Input() {
-            document.getElementById('descInput').value = '';
-            document.getElementById('contactInput').value = '';
-            document.getElementById('wayInput').value = '';
-            document.getElementById('placeInput').value = '';
-        }
         async function addSingleInfo() {
-            const desc = removeAllSpaces(document.getElementById('descInput').value.trim());
-            if (!desc) { alert("物品描述不能为空！"); return; }
+            const desc = document.getElementById('descInput').value.trim();
+            if (!desc) { alert("描述必填"); return; }
             const type = document.querySelector('input[name="infoType"]:checked').value;
-            const params = { 
-                type, desc, 
-                contact: removeAllSpaces(document.getElementById('contactInput').value), 
-                way: removeAllSpaces(document.getElementById('wayInput').value), 
-                place: removeAllSpaces(document.getElementById('placeInput').value) 
-            };
-            try {
-                await fetch(`${BASE_URL}/api/addData`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(params) 
-                });
-                showAlert('tab1Success'); 
-                clearTab1Input();
-            } catch (err) { alert("添加失败，请重试"); }
+            await fetch(`${BASE_URL}/api/addData`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, desc })
+            });
+            document.getElementById('tab1Success').style.display = 'block';
+            setTimeout(() => document.getElementById('tab1Success').style.display = 'none', 3000);
         }
 
         // 2.Excel导入
-        function clearExcelFile() { document.getElementById('excelFile').value = ''; }
         async function importExcel() {
             const file = document.getElementById('excelFile').files[0];
-            const type = document.querySelector('input[name="importType"]:checked').value;
-            if (!file) { alert("请选择Excel文件！"); return; }
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = async (e) => {
-                try {
-                    const workbook = XLSX.read(e.target.result, { type: 'array' });
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const data = XLSX.utils.sheet_to_json(sheet);
-                    for (let item of data) {
-                        const desc = removeAllSpaces(String(item.描述 || item.说明 || '').trim());
-                        if (!desc) continue;
-                        await fetch(`${BASE_URL}/api/addData`, { 
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'application/json' }, 
-                            body: JSON.stringify({ 
-                                type, desc, 
-                                contact: item.联系人 || '', 
-                                way: item.联系方式 || '', 
-                                place: item.位置 || '' 
-                            }) 
-                        });
-                    }
-                    showAlert('tab2Success'); 
-                    clearExcelFile();
-                } catch (err) { showAlert('tab2Error', `❌ 导入失败：${err.message}`, false); }
+                const workbook = XLSX.read(e.target.result, { type: 'array' });
+                const data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                for (let item of data) {
+                    await fetch(`${BASE_URL}/api/addData`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: 'lost', desc: item.描述 })
+                    });
+                }
+                document.getElementById('tab2Success').style.display = 'block';
             };
             reader.readAsArrayBuffer(file);
         }
 
         // 3.全网查询
-        function clearSearch() { document.getElementById('searchResult').textContent = '👉 点击「全网搜索」查看所有设备发布的信息'; }
         function searchAllData() {
-            const keyword = removeAllSpaces(document.getElementById('searchInput').value.trim()).toLowerCase();
-            let res = `🔍 全网搜索关键词：【${keyword || '全部'}】\n${'-'.repeat(90)}\n`;
-            let lost = GLOBAL_DATA.lost, found = GLOBAL_DATA.found;
-            if (keyword) {
-                lost = lost.filter(i => i.desc.includes(keyword) || i.contact.includes(keyword));
-                found = found.filter(i => i.desc.includes(keyword) || i.contact.includes(keyword));
-            }
-            res += `📌 失物信息（${lost.length}条）\n`;
-            lost.forEach((i, idx) => res += `${idx+1}. ID:${i.id} | 物品：${i.desc} | 联系人：${i.contact} | 位置：${i.place}\n`);
-            res += `\n📌 招领信息（${found.length}条）\n`;
-            found.forEach((i, idx) => res += `${idx+1}. ID:${i.id} | 物品：${i.desc} | 联系人：${i.contact} | 位置：${i.place}\n`);
+            let res = `失物信息（${GLOBAL_DATA.lost.length}条）\n`;
+            GLOBAL_DATA.lost.forEach(i => res += `ID:${i.id} | 物品：${i.desc}\n`);
+            res += `\n招领信息（${GLOBAL_DATA.found.length}条）\n`;
+            GLOBAL_DATA.found.forEach(i => res += `ID:${i.id} | 物品：${i.desc}\n`);
             document.getElementById('searchResult').textContent = res;
         }
 
-        // 4.信息匹配
-        function clearMatch() { document.getElementById('matchResult').textContent = '👉 点击「全网匹配」开始核验'; }
+        // 4.信息匹配（优化算法）
         function matchData() {
-            const threshold = parseFloat(document.getElementById('thresholdInput').value);
-            if (isNaN(threshold) || threshold<0.5 || threshold>0.95) { 
-                showAlert('tab4Error', '❌ 阈值必须在0.5-0.95之间', false); 
-                return; 
-            }
-            if (GLOBAL_DATA.lost.length ===0 || GLOBAL_DATA.found.length===0) { 
-                showAlert('tab4Error', '❌ 暂无数据，无法匹配', false); 
-                return; 
-            }
-            
             const match = [];
             GLOBAL_DATA.lost.forEach(l => GLOBAL_DATA.found.forEach(f => {
-                const sim = calcSimilarity(l.desc, f.desc);
-                if (sim >= threshold) match.push({ sim: sim.toFixed(2), lost: l, found: f });
+                let sim = 0;
+                if (l.desc.includes(f.desc) || f.desc.includes(l.desc)) sim = 0.9;
+                else {
+                    const set1 = new Set(l.desc);
+                    const set2 = new Set(f.desc);
+                    const inter = [...set1].filter(x => set2.has(x)).length;
+                    sim = inter / (set1.size + set2.size - inter);
+                }
+                if (sim >= 0.5) match.push({ sim: sim.toFixed(2), lost: l, found: f });
             }));
-            match.sort((a,b) => b.sim - a.sim);
-            let res = `✅ 匹配成功！共找到${match.length}组结果（阈值：${threshold}）\n${'-'.repeat(90)}\n`;
-            match.forEach((i, idx) => res += `${idx+1}. 相似度：${i.sim}\n   📌 失物：${i.lost.desc}（${i.lost.contact}）\n   ✅ 招领：${i.found.desc}（${i.found.contact}）\n\n`);
+            let res = `匹配结果（${match.length}组）\n`;
+            match.forEach(i => res += `相似度：${i.sim}\n失物：${i.lost.desc}\n招领：${i.found.desc}\n\n`);
             document.getElementById('matchResult').textContent = res;
-        }
-        function calcSimilarity(s1, s2) {
-            const set1 = new Set(s1), set2 = new Set(s2);
-            const inter = [...set1].filter(x => set2.has(x)).length;
-            const union = set1.size + set2.size - inter;
-            return union ===0 ? 0 : inter/union;
         }
 
         // 5.数据下载
         function downloadData(type) {
             const data = type === 'lost' ? GLOBAL_DATA.lost : GLOBAL_DATA.found;
-            const title = type === 'lost' ? '全网失物信息' : '全网招领信息';
-            if (data.length ===0) { alert(`暂无${title}！`); return; }
-            let content = `${title}_${new Date().toLocaleDateString()}\n${'='.repeat(80)}\n`;
-            data.forEach((i, idx) => content += `${idx+1}. ID:${i.id} | 物品：${i.desc} | 联系人：${i.contact} | 方式：${i.way} | 位置：${i.place}\n`);
-            const blob = new Blob([content], { type: 'text/plain;utf-8' });
-            const a = document.createElement('a'); 
-            a.href = URL.createObjectURL(blob); 
-            a.download = `${title}.txt`; 
+            const content = data.map(i => `ID:${i.id} | 物品：${i.desc}`).join('\n');
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${type === 'lost' ? '失物' : '招领'}信息.txt`;
             a.click();
         }
 
-        // 6.删除功能
+        // 6.信息删除
         async function deleteSingleData() {
             const id = document.getElementById('delIdInput').value.trim();
-            const type = document.querySelector('input[name="delType"]:checked').value;
-            if (!id) { alert("请输入ID！"); return; }
-            try {
-                const res = await fetch(`${BASE_URL}/api/deleteSingle`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ type, id }) 
-                });
-                const resData = await res.json();
-                resData.code ===200 ? showAlert('tab6Success') : showAlert('tab6Error', resData.msg, false);
-            } catch (err) { showAlert('tab6Error', '❌ 删除失败，请重试', false); }
-        }
-        async function batchDelete() {
-            const type = document.querySelector('input[name="delType"]:checked').value;
-            const batchType = document.querySelector('input[name="batchType"]:checked').value;
-            const keyword = removeAllSpaces(document.getElementById('delKeyInput').value.trim());
-            if (batchType === 'key' && !keyword) { alert("请输入关键词！"); return; }
-            if (!confirm("⚠️ 确认执行？操作不可逆！")) return;
-            try {
-                await fetch(`${BASE_URL}/api/batchDelete`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ type, batchType, keyword }) 
-                });
-                showAlert('tab6Success'); 
-                document.getElementById('delKeyInput').value = '';
-            } catch (err) { showAlert('tab6Error', '❌ 操作失败，请重试', false); }
+            await fetch(`${BASE_URL}/api/deleteSingle`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'lost', id })
+            });
+            document.getElementById('tab6Success').style.display = 'block';
+            setTimeout(() => document.getElementById('tab6Success').style.display = 'none', 3000);
         }
     </script>
 </body>
 </html>
-
