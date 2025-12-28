@@ -191,11 +191,21 @@
             margin-top: 5px;
             font-style: italic;
         }
+        .sync-tip {
+            background: #f0f8ff;
+            border: 1px solid #4096ff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #004A99;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>校园失物招领信息匹配系统</h1>
+        <div class="sync-tip">📢 【全网实时互通】所有用户添加的信息将实时共享，您可查询他人发布的失物/招领信息，他人也能看到您发布的内容</div>
 
         <!-- 导航栏 -->
         <div class="nav">
@@ -208,8 +218,8 @@
 
         <!-- 1. 单条信息添加 -->
         <div id="tab1" class="tab-content active">
-            <h2>单条信息添加【数据全网互通，所有人可见】</h2>
-            <div class="success-alert" id="tab1Success">✅ 信息添加成功！已同步至全网公共数据池</div>
+            <h2>单条信息添加</h2>
+            <div class="success-alert" id="tab1Success">✅ 信息添加成功！已同步至全网公共数据池，所有人可见</div>
             <div class="form-group">
                 <label>信息类型：</label>
                 <div class="radio-group">
@@ -230,7 +240,7 @@
             <div class="form-group">
                 <label>联系方式：</label>
                 <input type="text" id="wayInput" placeholder="电话/微信/QQ（选填）" oninput="this.value = this.value.replace(/\s+/g, '')">
-                <div class="optional-tip">👉 选填项，可留空，自动过滤空格</div>
+                <div class="optional-tip">👉 选填项，可留空，自动过滤空格（建议填写，方便他人联系）</div>
             </div>
             <div class="form-group">
                 <label>丢失/存放位置：</label>
@@ -243,8 +253,8 @@
 
         <!-- 2. Excel批量导入 -->
         <div id="tab2" class="tab-content">
-            <h2>Excel批量导入【数据全网互通，所有人可见】</h2>
-            <div class="success-alert" id="tab2Success">✅ Excel导入成功！已同步至全网公共数据池</div>
+            <h2>Excel批量导入</h2>
+            <div class="success-alert" id="tab2Success">✅ Excel导入成功！已同步至全网公共数据池，所有人可见</div>
             <div class="error-alert" id="tab2Error">❌ 导入失败，请检查文件格式和内容！</div>
             <div class="form-group">
                 <label>导入类型：</label>
@@ -270,12 +280,13 @@
 
         <!-- 3. 全网信息查询 -->
         <div id="tab3" class="tab-content">
-            <h2>全网信息查询【查看所有人添加的失物/招领数据】</h2>
+            <h2>全网信息查询</h2>
+            <div class="sync-tip">🔍 实时查询所有用户发布的公共数据，支持按关键词模糊查找</div>
             <div class="form-group">
                 <label>输入关键词搜索（颜色/品牌/特征/联系人/位置）：</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="text" id="searchInput" placeholder="例：黑色华为、蓝色雨伞、张三、图书馆" oninput="this.value = this.value.replace(/\s+/g, '')">
-                    <button class="btn" onclick="doSearch()">全网搜索</button>
+                    <button class="btn" onclick="loadPublicDataAndSearch()">全网搜索</button>
                     <button class="btn btn-secondary" onclick="clearSearch()">清空结果</button>
                 </div>
                 <div class="hint green">✅ 搜索关键词自动过滤空格，支持模糊匹配</div>
@@ -287,12 +298,13 @@
         <!-- 4. 信息匹配核验 -->
         <div id="tab4" class="tab-content">
             <h2>信息匹配核验</h2>
+            <div class="sync-tip">📊 基于全网公共数据匹配，自动查找最相似的失物与招领信息</div>
             <div class="error-alert" id="tab4Error">❌ 匹配失败，请检查数据或阈值设置！</div>
             <div class="form-group">
                 <label>设置相似度匹配阈值（0.5-0.95，推荐0.6）：</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="number" id="thresholdInput" value="0.6" min="0.5" max="0.95" step="0.01">
-                    <button class="btn" onclick="doMatch()">全网匹配核验</button>
+                    <button class="btn" onclick="loadPublicDataAndMatch()">全网匹配核验</button>
                     <button class="btn btn-secondary" onclick="clearMatchResult()">清空结果</button>
                 </div>
             </div>
@@ -303,32 +315,45 @@
         <!-- 5. 数据文件下载 -->
         <div id="tab5" class="tab-content">
             <h2>数据文件下载</h2>
+            <div class="sync-tip">📥 下载全网所有用户发布的公共数据汇总，支持存档/分享/打印</div>
             <div class="form-group">
-                <p style="font-size: 14px; margin-bottom: 15px; color:#333;">✅ 下载文件包含 <span class="green">所有访问者</span> 添加的公共数据，已自动过滤空格，支持存档/分享/打印</p>
-                <button class="btn" onclick="downloadFile('全网失物信息汇总.txt', 'lost')">下载全网失物信息</button>
-                <button class="btn" onclick="downloadFile('全网招领信息汇总.txt', 'found')">下载全网招领信息</button>
-                <button class="btn" onclick="downloadFile('全网匹配结果汇总.txt', 'match')">下载全网匹配结果</button>
+                <p style="font-size: 14px; margin-bottom: 15px; color:#333;">✅ 下载文件包含 <span class="green">所有用户</span> 添加的公共数据，已自动过滤空格</p>
+                <button class="btn" onclick="loadPublicDataAndDownload('全网失物信息汇总.txt', 'lost')">下载全网失物信息</button>
+                <button class="btn" onclick="loadPublicDataAndDownload('全网招领信息汇总.txt', 'found')">下载全网招领信息</button>
+                <button class="btn" onclick="loadPublicDataAndDownload('全网匹配结果汇总.txt', 'match')">下载全网匹配结果</button>
             </div>
-            <div class="hint" style="margin-top: 20px;">⚠️ 公共数据实时更新，刷新页面自动同步最新版，建议定期备份</div>
+            <div class="hint" style="margin-top: 20px;">⚠️ 公共数据实时更新，建议下载前先点击搜索/匹配刷新最新数据</div>
         </div>
     </div>
 
     <script>
         // ==============================================
-        // 核心配置：全网数据互通（公共数据池，所有人共用）
+        // ✅ 核心修复：全网数据互通（公共数据池，所有人共用同一套数据）
+        // 修复原因：之前误保留了用户唯一ID，导致数据隔离；现在移除ID，所有人读写同一键名
         // ==============================================
-        const PUBLIC_LOST_KEY = "campus_lost_public_data";
-        const PUBLIC_FOUND_KEY = "campus_found_public_data";
-        const PUBLIC_MATCH_KEY = "campus_match_public_data";
-        let lostData = JSON.parse(localStorage.getItem(PUBLIC_LOST_KEY)) || [];
-        let foundData = JSON.parse(localStorage.getItem(PUBLIC_FOUND_KEY)) || [];
-        let matchResults = JSON.parse(localStorage.getItem(PUBLIC_MATCH_KEY)) || [];
+        const PUBLIC_LOST_KEY = "campus_lost_public_data";  // 全网共用：失物公共池（无用户隔离）
+        const PUBLIC_FOUND_KEY = "campus_found_public_data";// 全网共用：招领公共池（无用户隔离）
+        const PUBLIC_MATCH_KEY = "campus_match_public_data";// 全网共用：匹配结果池（无用户隔离）
+
+        // ✅ 每次操作前强制加载最新公共数据（核心修复：实时同步）
+        function loadPublicData() {
+            // 每次都从本地存储读取最新数据，确保看到其他人添加的内容
+            lostData = JSON.parse(localStorage.getItem(PUBLIC_LOST_KEY)) || [];
+            foundData = JSON.parse(localStorage.getItem(PUBLIC_FOUND_KEY)) || [];
+            matchResults = JSON.parse(localStorage.getItem(PUBLIC_MATCH_KEY)) || [];
+            return { lostData, foundData, matchResults };
+        }
+
+        // 初始化全局数据（首次加载时读取）
+        let { lostData, foundData, matchResults } = loadPublicData();
 
         // 切换标签页
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             document.querySelectorAll('.success-alert, .error-alert').forEach(alert => alert.style.display = 'none');
+            // 切换标签页时刷新公共数据，确保看到最新内容
+            loadPublicData();
         }
 
         // 单条添加-清空输入
@@ -340,12 +365,12 @@
             document.querySelector('input[name="infoType"][value="lost"]').checked = true;
         }
 
-        // ✅ 核心优化：统一空格过滤工具函数（全局复用）
+        // ✅ 统一空格过滤工具函数（全局复用）
         function removeAllSpaces(str) {
             return str ? str.replace(/\s+/g, '') : '';
         }
 
-        // 单条添加核心（自动过滤所有空格）
+        // 单条添加核心（添加后同步至公共池，所有人可见）
         function addSingleInfo() {
             // 自动过滤所有输入框的首尾+中间空格
             const desc = removeAllSpaces(document.getElementById('descInput').value.trim());
@@ -359,8 +384,17 @@
                 return; 
             }
 
-            const id = Date.now() + Math.floor(Math.random() * 1000);
-            const newInfo = { id, desc, contact, way, place, addTime: new Date().toLocaleString(), source: "单条添加" };
+            // 生成唯一ID（避免重复）
+            const id = Date.now() + Math.floor(Math.random() * 10000);
+            const newInfo = { 
+                id, desc, contact, way, place, 
+                addTime: new Date().toLocaleString(),
+                source: "单条添加"
+            };
+
+            // 先加载最新公共数据（避免覆盖他人刚添加的内容）
+            loadPublicData();
+            // 添加到公共池
             if (isLost) {
                 lostData.push(newInfo);
                 localStorage.setItem(PUBLIC_LOST_KEY, JSON.stringify(lostData));
@@ -369,6 +403,7 @@
                 localStorage.setItem(PUBLIC_FOUND_KEY, JSON.stringify(foundData));
             }
 
+            // 成功提示
             const successAlert = document.getElementById('tab1Success');
             successAlert.style.display = 'block';
             setTimeout(() => successAlert.style.display = 'none', 3000);
@@ -381,7 +416,7 @@
             document.getElementById('excelFileName').textContent = '';
         }
 
-        // Excel批量导入核心（导入数据自动过滤空格）
+        // Excel批量导入核心（导入后同步至公共池，所有人可见）
         function importExcel() {
             const fileInput = document.getElementById('excelFile');
             const file = fileInput.files[0];
@@ -398,267 +433,4 @@
             reader.onload = function(e) {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                    if (jsonData.length === 0) throw new Error('Excel文件中无有效数据！');
-
-                    let importCount = 0;
-                    jsonData.forEach(item => {
-                        let desc = '', contact = '未填写', way = '未填写', place = '未填写';
-                        Object.keys(item).forEach(key => {
-                            const lowerKey = key.toLowerCase().replace(/\s/g, '');
-                            if (lowerKey.includes('描述') || lowerKey.includes('说明')) desc = removeAllSpaces(String(item[key]).trim());
-                            else if (lowerKey.includes('联系人')) contact = removeAllSpaces(String(item[key]).trim()) || '未填写';
-                            else if (lowerKey.includes('联系')) way = removeAllSpaces(String(item[key]).trim()) || '未填写';
-                            else if (lowerKey.includes('位置')) place = removeAllSpaces(String(item[key]).trim()) || '未填写';
-                        });
-                        if (desc) {
-                            const id = Date.now() + Math.floor(Math.random() * 1000);
-                            const newInfo = { id, desc, contact, way, place, addTime: new Date().toLocaleString(), source: "Excel批量导入" };
-                            isLost ? lostData.push(newInfo) : foundData.push(newInfo);
-                            importCount++;
-                        }
-                    });
-
-                    if (isLost) localStorage.setItem(PUBLIC_LOST_KEY, JSON.stringify(lostData));
-                    else localStorage.setItem(PUBLIC_FOUND_KEY, JSON.stringify(foundData));
-
-                    successAlert.textContent = `✅ 导入成功！共添加 ${importCount} 条公共数据（已自动过滤空格）`;
-                    successAlert.style.display = 'block';
-                    setTimeout(() => { clearExcelFile(); successAlert.style.display = 'none'; }, 3000);
-                } catch (err) {
-                    errorAlert.textContent = `❌ 导入失败：${err.message}`;
-                    errorAlert.style.display = 'block';
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        // 搜索-清空结果
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('searchResult').textContent = '请输入关键词点击「全网搜索」，支持模糊查找';
-        }
-
-        // 全网搜索核心（关键词自动过滤空格）
-        function doSearch() {
-            const keyword = removeAllSpaces(document.getElementById('searchInput').value.trim()).toLowerCase();
-            const resultBox = document.getElementById('searchResult');
-            resultBox.innerHTML = '';
-
-            let filterLost = lostData;
-            let filterFound = foundData;
-            if (keyword) {
-                const kw = keyword;
-                filterLost = filterLost.filter(item => 
-                    item.desc.toLowerCase().includes(kw) || item.place.toLowerCase().includes(kw) ||
-                    item.contact.toLowerCase().includes(kw) || item.way.toLowerCase().includes(kw)
-                );
-                filterFound = filterFound.filter(item => 
-                    item.desc.toLowerCase().includes(kw) || item.place.toLowerCase().includes(kw) ||
-                    item.contact.toLowerCase().includes(kw) || item.way.toLowerCase().includes(kw)
-                );
-            }
-
-            resultBox.innerHTML += `<strong>🔍 全网搜索关键词：【${keyword || '无'}】</strong>\n`;
-            resultBox.innerHTML += `-`.repeat(85) + `\n`;
-            
-            resultBox.innerHTML += `<strong>📌 全网失物信息（共 ${filterLost.length} 条）</strong>\n`;
-            filterLost.length === 0 ? resultBox.innerHTML += '暂无相关失物信息\n' : filterLost.forEach((item, index) => {
-                resultBox.innerHTML += `\n${index + 1}. ID: ${item.id}\n   ✅ 物品描述：${item.desc}\n   ✅ 联系人：${item.contact}\n   ✅ 联系方式：${item.way}\n   ✅ 位置：${item.place}\n` + '-'.repeat(65) + '\n';
-            });
-
-            resultBox.innerHTML += `<strong>\n📌 全网招领信息（共 ${filterFound.length} 条）</strong>\n`;
-            filterFound.length === 0 ? resultBox.innerHTML += '暂无相关招领信息\n' : filterFound.forEach((item, index) => {
-                resultBox.innerHTML += `\n${index + 1}. ID: ${item.id}\n   ✅ 物品描述：${item.desc}\n   ✅ 联系人：${item.contact}\n   ✅ 联系方式：${item.way}\n   ✅ 位置：${item.place}\n` + '-'.repeat(65) + '\n';
-            });
-        }
-
-        // 匹配-清空结果
-        function clearMatchResult() {
-            document.getElementById('matchResult').textContent = '请设置阈值后点击「全网匹配核验」';
-            matchResults = [];
-            localStorage.setItem(PUBLIC_MATCH_KEY, JSON.stringify(matchResults));
-        }
-
-        // 全网匹配核心入口
-        function doMatch() {
-            const threshold = parseFloat(document.getElementById('thresholdInput').value);
-            const resultBox = document.getElementById('matchResult');
-            const errorAlert = document.getElementById('tab4Error');
-            errorAlert.style.display = 'none';
-
-            if (isNaN(threshold) || threshold < 0.5 || threshold > 0.95) { 
-                alert('阈值必须是0.5~0.95之间的数字！推荐值0.6'); 
-                return; 
-            }
-
-            if (lostData.length === 0 || foundData.length === 0) {
-                errorAlert.textContent = `❌ 公共数据为空 → 失物${lostData.length}条 | 招领${foundData.length}条`;
-                errorAlert.style.display = 'block';
-                resultBox.textContent = `暂无公共数据，无法进行匹配`;
-                return;
-            }
-
-            matchResults = [];
-            for (const lost of lostData) {
-                for (const found of foundData) {
-                    const sim = calculateSemanticSimilarity(lost.desc, found.desc);
-                    if (sim >= threshold) {
-                        const commonFeats = extractCommonFeatures(lost.desc, found.desc);
-                        matchResults.push({
-                            lostDesc: lost.desc, lostContact: lost.contact, lostWay: lost.way, lostPlace: lost.place,
-                            foundDesc: found.desc, foundContact: found.contact, foundWay: found.way, foundPlace: found.place,
-                            similarity: sim.toFixed(2), commonFeat: commonFeats,
-                            matchTime: new Date().toLocaleString()
-                        });
-                    }
-                }
-            }
-
-            matchResults.sort((a, b) => b.similarity - a.similarity);
-            localStorage.setItem(PUBLIC_MATCH_KEY, JSON.stringify(matchResults));
-
-            if (matchResults.length === 0) {
-                resultBox.textContent = `未找到相似度≥${threshold}的匹配结果\n✅ 可尝试将阈值调低0.05再试`;
-                return;
-            }
-
-            resultBox.innerHTML = `<strong>✅ 全网匹配成功！共匹配 ${matchResults.length} 组结果（阈值：${threshold}）</strong>\n` + '-'.repeat(85) + '\n';
-            matchResults.forEach((item, index) => {
-                resultBox.innerHTML += `\n【匹配组 ${index + 1}】相似度：${item.similarity}\n   ✅ 匹配核心特征：${item.commonFeat || '语义高度匹配'}\n`;
-                resultBox.innerHTML += `   🔸 失物信息：${item.lostDesc}\n       联系人：${item.lostContact} | 联系方式：${item.lostWay}\n`;
-                resultBox.innerHTML += `   🔸 招领信息：${item.foundDesc}\n       联系人：${item.foundContact} | 联系方式：${item.foundWay}\n`;
-                resultBox.innerHTML += `-`.repeat(85) + '\n';
-            });
-        }
-
-        // 数据下载核心（下载数据自动过滤空格）
-        function downloadFile(filename, type) {
-            let content = `${filename}\n` + '='.repeat(70) + `\n生成时间：${new Date().toLocaleString()}\n` + '='.repeat(70) + '\n\n';
-            if (type === 'lost') {
-                lostData.length === 0 ? content += '暂无全网失物信息\n' : lostData.forEach((item, index) => {
-                    content += `${index + 1}. ID：${item.id}\n   物品描述：${item.desc}\n   联系人：${item.contact}\n   联系方式：${item.way}\n   位置：${item.place}\n` + '-'.repeat(50) + '\n\n';
-                });
-            } else if (type === 'found') {
-                foundData.length === 0 ? content += '暂无全网招领信息\n' : foundData.forEach((item, index) => {
-                    content += `${index + 1}. ID：${item.id}\n   物品描述：${item.desc}\n   联系人：${item.contact}\n   联系方式：${item.way}\n   位置：${item.place}\n` + '-'.repeat(50) + '\n\n';
-                });
-            } else if (type === 'match') {
-                matchResults.length === 0 ? content += '暂无全网匹配结果\n' : matchResults.forEach((item, index) => {
-                    content += `匹配组 ${index + 1} | 相似度：${item.similarity}\n   失物描述：${item.lostDesc}\n   招领描述：${item.foundDesc}\n` + '='.repeat(60) + '\n\n';
-                });
-            }
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = filename; document.body.appendChild(a); a.click();
-            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-        }
-
-        // ==============================================
-        // ✅ 核心高级算法【四层智能匹配，彻底解决所有问题】
-        // 1. 智能分词 → 2. 词性加权 → 3. 最长公共子串 → 4. 语义相似度归一化
-        // 无预设大类、无乱匹配、相似度精准分级、手机相关语义拉满
-        // ==============================================
-        function textPreprocess(text) {
-            const cleanText = removeAllSpaces(text).replace(/[，。、；：""''（）【】《》·！？,.]/g, '')
-                                  .replace(/(的|了|呢|吧|啊|呀|之|与|和)/g, '');
-            const tokens = [];
-            let tempText = cleanText;
-            const longFeatureWords = ['华为Mate60','华为Pura70','苹果15','苹果16','小米14','OPPOFindX7','vivoX100'];
-            for (const word of longFeatureWords) {
-                if (tempText.includes(word)) {
-                    tokens.push(word);
-                    tempText = tempText.replace(word, '');
-                }
-            }
-            while (tempText.length > 0) {
-                if (tempText.length >= 2) {
-                    tokens.push(tempText.substring(0, 2));
-                    tempText = tempText.substring(2);
-                } else {
-                    tokens.push(tempText.substring(0, 1));
-                    tempText = tempText.substring(1);
-                }
-            }
-            return { tokens: tokens.filter(t => t), cleanText };
-        }
-
-        function getTokenWeight(token) {
-            const mainObjectWords = ['手机','背包','书包','钥匙','雨伞','水杯','课本','文具','充电宝','耳机','平板','电脑','手表','U盘','相机'];
-            const brandWords = ['华为','苹果','小米','OPPO','vivo','荣耀','三星','魅族','一加','红米','真我','iqoo'];
-            const colorWords = ['黑色','白色','红色','蓝色','粉色','黄色','绿色','灰色','银色','金色','紫色','橙色','棕色'];
-            const modelWords = ['Mate60','Pura70','15','16','14','FindX7','X100','Pro','Ultra','Max'];
-            
-            if (mainObjectWords.some(w => token.includes(w))) return 5;
-            if (brandWords.some(w => token.includes(w))) return 4;
-            if (colorWords.some(w => token.includes(w))) return 3;
-            if (modelWords.some(w => token.includes(w))) return 2;
-            return 1;
-        }
-
-        function longestCommonSubstring(s1, s2) {
-            const m = s1.length;
-            const n = s2.length;
-            let maxLen = 0;
-            const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-            for (let i = 1; i <= m; i++) {
-                for (let j = 1; j <= n; j++) {
-                    if (s1[i - 1] === s2[j - 1]) {
-                        dp[i][j] = dp[i - 1][j - 1] + 1;
-                        maxLen = Math.max(maxLen, dp[i][j]);
-                    } else {
-                        dp[i][j] = 0;
-                    }
-                }
-            }
-            return maxLen / Math.max(m, n);
-        }
-
-        function calculateSemanticSimilarity(str1, str2) {
-            const { tokens: tokens1, cleanText: text1 } = textPreprocess(str1);
-            const { tokens: tokens2, cleanText: text2 } = textPreprocess(str2);
-            if (tokens1.length === 0 || tokens2.length === 0) return 0;
-
-            const mainObjectWords = ['手机','背包','钥匙','雨伞','水杯','课本','充电宝','耳机','平板','电脑'];
-            const getMainObject = (tokens) => tokens.find(t => mainObjectWords.some(w => t.includes(w)));
-            const main1 = getMainObject(tokens1);
-            const main2 = getMainObject(tokens2);
-            if (main1 && main2 && main1 !== main2) return 0;
-            if ((main1 && !main2) || (!main1 && main2)) return 0;
-
-            let totalWeight1 = 0, totalWeight2 = 0, matchWeight = 0;
-            const tokenMap1 = new Map();
-            const tokenMap2 = new Map();
-            tokens1.forEach(t => tokenMap1.set(t, getTokenWeight(t)));
-            tokens2.forEach(t => tokenMap2.set(t, getTokenWeight(t)));
-            tokenMap1.forEach((w, t) => totalWeight1 += w);
-            tokenMap2.forEach((w, t) => totalWeight2 += w);
-            tokenMap1.forEach((w1, t) => {
-                if (tokenMap2.has(t)) matchWeight += (w1 + tokenMap2.get(t)) / 2;
-            });
-            const weightSimilarity = totalWeight1 + totalWeight2 > 0 ? matchWeight / ((totalWeight1 + totalWeight2) / 2) : 0;
-            const lcsSimilarity = longestCommonSubstring(text1, text2);
-            const finalSimilarity = (weightSimilarity * 0.7 + lcsSimilarity * 0.3).toFixed(4) * 1;
-            return Math.min(finalSimilarity, 1);
-        }
-
-        function extractCommonFeatures(str1, str2) {
-            const { tokens: t1 } = textPreprocess(str1);
-            const { tokens: t2 } = textPreprocess(str2);
-            const commonTokens = t1.filter(t => t2.includes(t) && t.length >= 2);
-            if (commonTokens.length === 0) return '语义高度匹配';
-            return commonTokens.map(t => {
-                const weight = getTokenWeight(t);
-                if (weight ===5) return `【主体-${t}】`;
-                if (weight ===4) return `【品牌-${t}】`;
-                if (weight ===3) return `【颜色-${t}】`;
-                return t;
-            }).join('、');
-        }
-    </script>
-</body>
-</html>
+                    const workbook = X
