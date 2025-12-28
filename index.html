@@ -31,7 +31,7 @@
         input[type="radio"] { width: auto; margin-right: 5px; }
         .success-alert { background: #e6f7ef; color: #008000; padding: 10px; border-radius: 5px; margin: 15px 0; display: none; }
         .error-alert { background: #fde2e2; color: #ff4d4f; padding: 10px; border-radius: 5px; margin: 15px 0; display: none; }
-        .sync-tip { background: #e6f4ff; color: #0066CC; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
+        .sync-tip { background: #e6f4ff; color: #0066CC; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold; }
         .green { color: #008000; font-weight: bold; }
         .red { color: #ff4d4f; font-weight: bold; }
     </style>
@@ -39,7 +39,7 @@
 <body>
     <div class="container">
         <h1>校园失物招领系统【全网实时互通版】</h1>
-        <div class="sync-tip">✅ Python+Conda+HTML实现｜电脑/手机/平板 实时同步｜无需刷新</div>
+        <div class="sync-tip">✅ 已绑定你的服务器：http://10.200.16.218:5000 | 电脑/手机/平板 实时秒同步</div>
 
         <!-- 导航栏 -->
         <div class="nav">
@@ -156,9 +156,8 @@
     </div>
 
     <script>
-        // ===================== 仅改这1行！！！=====================
-        // ✅ 替换为你的电脑局域网IP（启动后端时终端显示的IP）
-        const BASE_URL = "http://192.168.1.105:5000";
+        // ===================== 已固定为你的服务器地址，无需修改！=====================
+        const BASE_URL = "http://10.200.16.218:5000";
         let GLOBAL_DATA = { lost: [], found: [], match: [] };
 
         // 初始化+实时轮询（每1秒同步一次，实现秒更）
@@ -197,10 +196,20 @@
             const desc = removeAllSpaces(document.getElementById('descInput').value.trim());
             if (!desc) { alert("物品描述不能为空！"); return; }
             const type = document.querySelector('input[name="infoType"]:checked').value;
-            const params = { type, desc, contact: removeAllSpaces(document.getElementById('contactInput').value), way: removeAllSpaces(document.getElementById('wayInput').value), place: removeAllSpaces(document.getElementById('placeInput').value) };
+            const params = { 
+                type, desc, 
+                contact: removeAllSpaces(document.getElementById('contactInput').value), 
+                way: removeAllSpaces(document.getElementById('wayInput').value), 
+                place: removeAllSpaces(document.getElementById('placeInput').value) 
+            };
             try {
-                await fetch(`${BASE_URL}/api/addData`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) });
-                showAlert('tab1Success'); clearTab1Input();
+                await fetch(`${BASE_URL}/api/addData`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(params) 
+                });
+                showAlert('tab1Success'); 
+                clearTab1Input();
             } catch (err) { alert("添加失败，请重试"); }
         }
 
@@ -219,9 +228,19 @@
                     for (let item of data) {
                         const desc = removeAllSpaces(String(item.描述 || item.说明 || '').trim());
                         if (!desc) continue;
-                        await fetch(`${BASE_URL}/api/addData`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, desc, contact: item.联系人 || '', way: item.联系方式 || '', place: item.位置 || '' }) });
+                        await fetch(`${BASE_URL}/api/addData`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ 
+                                type, desc, 
+                                contact: item.联系人 || '', 
+                                way: item.联系方式 || '', 
+                                place: item.位置 || '' 
+                            }) 
+                        });
                     }
-                    showAlert('tab2Success'); clearExcelFile();
+                    showAlert('tab2Success'); 
+                    clearExcelFile();
                 } catch (err) { showAlert('tab2Error', `❌ 导入失败：${err.message}`, false); }
             };
             reader.readAsArrayBuffer(file);
@@ -248,8 +267,14 @@
         function clearMatch() { document.getElementById('matchResult').textContent = '👉 点击「全网匹配」开始核验'; }
         function matchData() {
             const threshold = parseFloat(document.getElementById('thresholdInput').value);
-            if (isNaN(threshold) || threshold<0.5 || threshold>0.95) { showAlert('tab4Error', '❌ 阈值必须在0.5-0.95之间', false); return; }
-            if (GLOBAL_DATA.lost.length ===0 || GLOBAL_DATA.found.length===0) { showAlert('tab4Error', '❌ 暂无数据，无法匹配', false); return; }
+            if (isNaN(threshold) || threshold<0.5 || threshold>0.95) { 
+                showAlert('tab4Error', '❌ 阈值必须在0.5-0.95之间', false); 
+                return; 
+            }
+            if (GLOBAL_DATA.lost.length ===0 || GLOBAL_DATA.found.length===0) { 
+                showAlert('tab4Error', '❌ 暂无数据，无法匹配', false); 
+                return; 
+            }
             
             const match = [];
             GLOBAL_DATA.lost.forEach(l => GLOBAL_DATA.found.forEach(f => {
@@ -276,7 +301,10 @@
             let content = `${title}_${new Date().toLocaleDateString()}\n${'='.repeat(80)}\n`;
             data.forEach((i, idx) => content += `${idx+1}. ID:${i.id} | 物品：${i.desc} | 联系人：${i.contact} | 方式：${i.way} | 位置：${i.place}\n`);
             const blob = new Blob([content], { type: 'text/plain;utf-8' });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${title}.txt`; a.click();
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `${title}.txt`; 
+            a.click();
         }
 
         // 6.删除功能
@@ -285,7 +313,11 @@
             const type = document.querySelector('input[name="delType"]:checked').value;
             if (!id) { alert("请输入ID！"); return; }
             try {
-                const res = await fetch(`${BASE_URL}/api/deleteSingle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, id }) });
+                const res = await fetch(`${BASE_URL}/api/deleteSingle`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ type, id }) 
+                });
                 const resData = await res.json();
                 resData.code ===200 ? showAlert('tab6Success') : showAlert('tab6Error', resData.msg, false);
             } catch (err) { showAlert('tab6Error', '❌ 删除失败，请重试', false); }
@@ -297,8 +329,13 @@
             if (batchType === 'key' && !keyword) { alert("请输入关键词！"); return; }
             if (!confirm("⚠️ 确认执行？操作不可逆！")) return;
             try {
-                await fetch(`${BASE_URL}/api/batchDelete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, batchType, keyword }) });
-                showAlert('tab6Success'); document.getElementById('delKeyInput').value = '';
+                await fetch(`${BASE_URL}/api/batchDelete`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ type, batchType, keyword }) 
+                });
+                showAlert('tab6Success'); 
+                document.getElementById('delKeyInput').value = '';
             } catch (err) { showAlert('tab6Error', '❌ 操作失败，请重试', false); }
         }
     </script>
